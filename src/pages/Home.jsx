@@ -47,8 +47,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
+      {/* Background Elements (hidden on small screens for performance) */}
+      <div className="absolute inset-0 overflow-hidden hidden sm:block">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
@@ -101,7 +101,7 @@ export default function Home() {
                 transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }}
                 className="flex justify-center lg:justify-start mb-8"
               >
-                <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500/20 to-blue-500/20 border border-green-500/40 rounded-full text-sm font-medium text-green-600 dark:text-green-400 shadow-xl backdrop-blur-sm">
+                <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500/20 to-blue-500/20 border border-green-500/40 rounded-full text-sm font-medium text-green-600 dark:text-green-400 shadow-lg backdrop-blur-0 sm:backdrop-blur-sm">
                   <div className="w-3 h-3 bg-green-500 rounded-full mr-3 animate-pulse" />
                   Available for new opportunities
                 </div>
@@ -302,7 +302,7 @@ export default function Home() {
                   key={item.title}
                   variants={itemVariants}
                   whileHover={{ y: -10, scale: 1.02 }}
-                  className="group relative bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-6 lg:p-8 border border-gray-200/50 dark:border-gray-700/50 shadow-lg hover:shadow-2xl transition-all duration-300"
+                  className="group relative bg-white/60 dark:bg-gray-800/60 backdrop-blur-0 sm:backdrop-blur-sm rounded-2xl p-6 lg:p-8 border border-gray-200/50 dark:border-gray-700/50 shadow-lg hover:shadow-2xl transition-all duration-300"
                 >
                   <div className={`inline-flex items-center justify-center w-12 h-12 lg:w-16 lg:h-16 bg-gradient-to-r ${item.gradient} rounded-2xl mb-4 lg:mb-6 group-hover:scale-110 transition-transform duration-300`}>
                     <item.icon className="h-6 w-6 lg:h-8 lg:w-8 text-white" />
