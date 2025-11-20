@@ -228,7 +228,7 @@ export default function Home() {
                   className="relative w-72 h-80 sm:w-80 sm:h-96 lg:w-80 lg:h-96 xl:w-96 xl:h-[26rem] rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-white to-gray-100 dark:from-gray-800 dark:to-gray-900"
                 >
                   <img
-                    src="/public/images/hero_pic.jpg"
+                    src="/images/hero_pic.jpg"
                     alt="Hardik Ajmeriya"
                     className="w-full h-full object-cover object-center rounded-2xl transition-all duration-300 hover:brightness-105"
                     style={{

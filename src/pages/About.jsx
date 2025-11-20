@@ -304,7 +304,7 @@ const About = () => {
               >
                 <div className="relative w-80 h-80 rounded-2xl bg-gradient-to-br from-blue-400 to-purple-600 p-1">
                   <img
-                    src="/public/images/Me.png"
+                    src="/images/Me.png"
                     alt="Working"
                     className="w-full h-full rounded-2xl object-cover"
                     loading="lazy"
