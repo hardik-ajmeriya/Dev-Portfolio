@@ -1,4 +1,5 @@
 import React, { Suspense, lazy, useEffect } from 'react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -108,6 +109,8 @@ const AppContent = () => {
         </AnimatePresence>
       </main>
       <Footer />
+      {/* Vercel Speed Insights for performance telemetry */}
+      <SpeedInsights />
     </div>
   );
 };
