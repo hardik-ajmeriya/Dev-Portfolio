@@ -13,7 +13,7 @@ const Projects = () => {
         "Cloud-Native DevOps Pipeline on AWS (Kubernetes + Terraform + GitOps + ArgoCD)",
       description:
         "End-to-end DevOps pipeline with automated builds, cloud provisioning, GitOps deployment, and real-time monitoring on AWS EKS.",
-      image: "/images/devops.png",
+      image: "/images/pipeline.png",
       techStack: [
         "Terraform",
         "AWS EKS",
@@ -43,7 +43,7 @@ const Projects = () => {
       title: "CureNeed Medicine E-commerce Platform",
       description:
         "A structured medicine management system built with a full-stack architecture, enabling automated categorization and real-time backend synchronization. Fully integrated with the main medical website for unified management.",
-      image: "/images/medcare.png",
+      image: "/images/cureneed.png",
       techStack: [
         "Next.js",
         "React",
@@ -65,8 +65,7 @@ const Projects = () => {
       title: "Hostel OutPass Manager",
       description:
         "Hostel Outpass Manager is a Flutter-based mobile application designed to streamline the process of managing outpass requests for students and wardens. The app features separate portals for students and wardens, ensuring a smooth and efficient workflow.",
-      image:
-        "/images/oitpass.png",
+      image: "/images/outpass.png",
       techStack: [
         "Flutter",
         "Dart",
@@ -82,24 +81,31 @@ const Projects = () => {
         "MongoDB",
         "pub",
       ],
-      githubUrl: "https://github.com/hardik-ajmeriya/hostel_outpass_manager.git",
+      githubUrl:
+        "https://github.com/hardik-ajmeriya/hostel_outpass_manager.git",
       liveUrl: "",
       category: "frontend",
       featured: false,
     },
     {
       id: 4,
-      title: "Foods - College Canteen Food Ordering App",
+      title: "Kubernetes Monitoring with Prometheus & Grafana",
       description:
-        "A modern, professional web application for college canteen food ordering built with React, Vite, Tailwind CSS, and Firebase. Features real-time order tracking, student authentication, staff dashboard, and a mobile-first PWA design.",
-      image:
-        "/images/mrc.png",
-      techStack: ["Next.js", "TypeScript", "Prisma", "NextAuth.js", "Chart.js"],
-      githubUrl: "https://github.com/hardik-ajmeriya/MRC-Foods.git",
-      liveUrl: "https://social-dashboard-demo.vercel.app",
-      category: "fullstack",
+        "A cloud-native Kubernetes monitoring project where Prometheus and Grafana were deployed to collect and visualize cluster and application metrics. Implemented real-time monitoring for pod health, CPU and memory usage, and service performance using Grafana dashboards.",
+      image: "/images/prometheus.png",
+      techStack: [
+        "Kubernetes",
+        "Docker",
+        "Prometheus",
+        "Grafana",
+        "Helm",
+        "Linux",
+      ],
+      githubUrl: "https://github.com/hardik-ajmeriya/k8s-kind-voting-app.git",
+      liveUrl: "",
+      category: "devops",
       featured: true,
-    }
+    },
   ];
 
   const categories = [
