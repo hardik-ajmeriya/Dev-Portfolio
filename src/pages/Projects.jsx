@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Github, ExternalLink, Star, Filter, Search } from "lucide-react";
+import { Github, ExternalLink, Star, Filter, Search, AlertTriangle } from "lucide-react";
 
 const Projects = () => {
   const [filter, setFilter] = useState("all");
@@ -35,6 +35,8 @@ const Projects = () => {
       ],
       githubUrl:
         "https://github.com/hardik-ajmeriya/ultimate-devops-project-demo.git",
+      status: "Completed",
+      isUnderDevelopment: false,
       category: "fullstack",
       featured: true,
     },
@@ -57,6 +59,8 @@ const Projects = () => {
       ],
       githubUrl: "https://github.com/hardik-ajmeriya/MedCare.git",
       liveUrl: "",
+      status: "Completed",
+      isUnderDevelopment: false,
       category: "frontend",
       featured: false,
     },
@@ -84,6 +88,8 @@ const Projects = () => {
       githubUrl:
         "https://github.com/hardik-ajmeriya/hostel_outpass_manager.git",
       liveUrl: "",
+      status: "Completed",
+      isUnderDevelopment: false,
       category: "frontend",
       featured: false,
     },
@@ -103,8 +109,36 @@ const Projects = () => {
       ],
       githubUrl: "https://github.com/hardik-ajmeriya/k8s-kind-voting-app.git",
       liveUrl: "",
+      status: "Completed",
+      isUnderDevelopment: false,
       category: "devops",
-      featured: true,
+      featured: false,
+    },
+    {
+      id: 5,
+      title:
+        "DCPVAS – DevOps CI/CD Pipeline Visualizer with AI Failure Analysis",
+      description:
+        "An advanced full-stack DevOps project focused on real-time visualization of Jenkins CI/CD pipeline executions with AI-assisted failure analysis. The system streams pipeline stages synchronously, processes build logs deterministically, and generates structured failure insights and technical recommendations. Currently under active development with core architecture, real-time pipeline flow, and log processing completed.",
+      image: "/images/dcpvas.png",
+      techStack: [
+        "Jenkins",
+        "Node.js",
+        "Express.js",
+        "MongoDB",
+        "React",
+        "Vite",
+        "Server-Sent Events (SSE)",
+        "REST APIs",
+        "DevOps",
+        "CI/CD",
+      ],
+      githubUrl: "",
+      liveUrl: "",
+      status: "Under Development",
+      isUnderDevelopment: true,
+      category: "devops",
+      featured: false,
     },
   ];
 
@@ -121,7 +155,7 @@ const Projects = () => {
       project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       project.techStack.some((tech) =>
-        tech.toLowerCase().includes(searchTerm.toLowerCase())
+        tech.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     return matchesFilter && matchesSearch;
   });
@@ -234,7 +268,7 @@ const Projects = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   whileHover={{ y: -10 }}
-                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 group"
+                  className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 group"
                 >
                   <div className="relative overflow-hidden">
                     <motion.img
@@ -302,30 +336,54 @@ const Projects = () => {
                       transition={{ delay: 0.3 }}
                       className="flex items-center space-x-3"
                     >
-                      <motion.a
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        href={project.githubUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors text-sm"
-                      >
-                        <Github className="h-4 w-4 mr-1" />
-                        Code
-                      </motion.a>
-                      <motion.a
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        href={project.liveUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                      >
-                        <ExternalLink className="h-4 w-4 mr-1" />
-                        Live Demo
-                      </motion.a>
+                      {project.githubUrl && project.githubUrl.trim().length > 0 && (
+                        <motion.a
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          href={project.githubUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors text-sm"
+                        >
+                          <Github className="h-4 w-4 mr-1" />
+                          Code
+                        </motion.a>
+                      )}
+                      {project.isUnderDevelopment ? (
+                        <motion.button
+                          whileHover={{ scale: 1.0 }}
+                          whileTap={{ scale: 1.0 }}
+                          disabled
+                          className="flex items-center px-3 py-2 rounded-lg text-sm bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed opacity-80"
+                          aria-disabled="true"
+                          title="Live demo unavailable during development"
+                        >
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          Live Demo
+                        </motion.button>
+                      ) : (
+                        <motion.a
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          href={project.liveUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                        >
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          Live Demo
+                        </motion.a>
+                      )}
                     </motion.div>
                   </div>
+                  {project.isUnderDevelopment && (
+                    <div className="absolute bottom-4 right-4 z-10">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-medium bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-200 dark:border-yellow-700 whitespace-nowrap shrink-0">
+                        <AlertTriangle className="h-3 w-3" />
+                        Under Development
+                      </span>
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </motion.div>

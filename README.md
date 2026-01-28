@@ -13,6 +13,8 @@ Modern, performance‑optimized portfolio built with React, Vite, Tailwind CSS, 
 - Responsive, mobile‑first design (Tailwind + optimized layout)
 - Dark / light theme context with persistence
 - Smooth page transitions & micro‑interactions (Framer Motion)
+ - Smooth page transitions & micro‑interactions (Framer Motion)
+ - Project status indicator with clean "Under Development" badge
 - Route‑level code splitting via `React.lazy` + `Suspense` spinner
 - Lazy‑loaded non‑critical images (`loading="lazy"`, `decoding="async"`)
 - Accessible animations (prefers‑reduced‑motion respected)
@@ -53,6 +55,39 @@ src/
     Contact.jsx        # Web3Forms integrated form
 public/
   images/              # Static assets (Me.png, project images, favicon.png)
+```
+
+## Project Status Indicator
+
+A minimal, professional status badge can be shown for projects that are still in progress. It appears at the bottom‑right of the project card and keeps a single‑line layout.
+
+- Fields on each project object:
+  - **status:** string (e.g., "Under Development", "Completed")
+  - **isUnderDevelopment:** boolean
+
+- UI behavior when `isUnderDevelopment` is true:
+  - A small yellow warning‑style badge with a ⚠ icon displays at the bottom‑right of the card.
+  - The "Live Demo" button is disabled.
+  - The GitHub "Code" button is hidden if `githubUrl` is empty.
+
+- Where it lives: see [src/pages/Projects.jsx](src/pages/Projects.jsx).
+
+### Example project entry
+
+```js
+{
+  id: 5,
+  title: "DCPVAS – DevOps CI/CD Pipeline Visualizer with AI Failure Analysis",
+  description: "…",
+  image: "/images/dcpvas.png",
+  techStack: ["Jenkins", "Node.js", "React", "Vite", "SSE"],
+  githubUrl: "",          // empty hides the Code button
+  liveUrl: "",            // demo stays disabled while in development
+  status: "Under Development",
+  isUnderDevelopment: true,
+  category: "devops",
+  featured: false,
+}
 ```
 
 ## Environment Variables
