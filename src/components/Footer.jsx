@@ -23,7 +23,7 @@ const Footer = () => {
               Made with <Heart className="h-4 w-4 mx-1 text-red-500" /> by Hardik Ajmeriya
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-              © 2025 All rights reserved.
+              © 2026 All rights reserved.
             </p>
           </motion.div>
           
