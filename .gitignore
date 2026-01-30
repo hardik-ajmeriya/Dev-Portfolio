@@ -23,3 +23,64 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# ===============================
+# Node / Frontend
+# ===============================
+node_modules/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===============================
+# Environment variables
+# ===============================
+.env
+.env.local
+.env.*.local
+
+# ===============================
+# Vite
+# ===============================
+.vite/
+
+# ===============================
+# Docker
+# ===============================
+# (Dockerfile is committed, but ignore local overrides if any)
+docker-compose.override.yml
+
+# ===============================
+# Jenkins
+# ===============================
+# Jenkins workspace & temp files (if ever generated locally)
+jenkins_home/
+
+# ===============================
+# Terraform
+# ===============================
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+terraform.tfvars.json
+
+# ===============================
+# Logs
+# ===============================
+logs/
+*.log
+
+# ===============================
+# OS / Editor
+# ===============================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ===============================
+# Optional / Future
+# ===============================
+coverage/

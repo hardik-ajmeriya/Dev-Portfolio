@@ -1,0 +1,24 @@
+# Node & package managers
+node_modules
+npm-debug.log
+
+# Vite / React build artifacts
+dist
+
+# Git
+.git
+.gitignore
+
+# Environment variables
+.env
+
+# OS / editor noise
+.DS_Store
+.vscode
+.idea
+
+# Docs & non-runtime files
+docs
+monitoring
+terraform
+ci-cd
