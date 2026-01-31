@@ -13,8 +13,8 @@ Modern, performance‑optimized portfolio built with React, Vite, Tailwind CSS, 
 - Responsive, mobile‑first design (Tailwind + optimized layout)
 - Dark / light theme context with persistence
 - Smooth page transitions & micro‑interactions (Framer Motion)
- - Smooth page transitions & micro‑interactions (Framer Motion)
- - Project status indicator with clean "Under Development" badge
+- Smooth page transitions & micro‑interactions (Framer Motion)
+- Project status indicator with clean "Under Development" badge
 - Route‑level code splitting via `React.lazy` + `Suspense` spinner
 - Lazy‑loaded non‑critical images (`loading="lazy"`, `decoding="async"`)
 - Accessible animations (prefers‑reduced‑motion respected)
@@ -26,16 +26,16 @@ Modern, performance‑optimized portfolio built with React, Vite, Tailwind CSS, 
 
 ## Tech Stack
 
-| Area         | Tools |
-|--------------|-------|
-| Framework    | React 18 + Vite |
-| Styling      | Tailwind CSS + custom gradients |
-| Animations   | Framer Motion |
-| Forms        | React Hook Form + Yup (advanced contact page) |
-| Icons        | lucide-react |
-| Email / Contact | Web3Forms API (serverless) |
-| State / Theme | React Context |
-| Tooling      | npm scripts |
+| Area            | Tools                                         |
+| --------------- | --------------------------------------------- |
+| Framework       | React 18 + Vite                               |
+| Styling         | Tailwind CSS + custom gradients               |
+| Animations      | Framer Motion                                 |
+| Forms           | React Hook Form + Yup (advanced contact page) |
+| Icons           | lucide-react                                  |
+| Email / Contact | Web3Forms API (serverless)                    |
+| State / Theme   | React Context                                 |
+| Tooling         | npm scripts                                   |
 
 > Note: Project uses plain JavaScript (`.jsx`) – not TypeScript.
 
@@ -101,7 +101,7 @@ VITE_WEB3FORMS_ACCESS_KEY=YOUR-WEB3FORMS-UUID-KEY
 Access inside React:
 
 ```js
-import.meta.env.VITE_WEB3FORMS_ACCESS_KEY
+import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
 ```
 
 Make sure the key is a valid UUID and mapped to your email (e.g. `hardik.ajmeriya89@gmail.com`) in the Web3Forms dashboard.
@@ -129,6 +129,7 @@ npm run preview    # Serve dist locally for verification
 The form posts directly to Web3Forms – no custom backend required.
 
 Flow:
+
 1. User submits form.
 2. `Contact.jsx` creates `FormData` with `access_key`, `name`, `email`, `subject`, `message`, `replyto`.
 3. POST to `https://api.web3forms.com/submit`.
@@ -172,6 +173,7 @@ Yup + React Hook Form used on the full contact page to enforce required fields, 
 ## Optional Cleanup
 
 If you are not using the legacy `backend/` folder (Web3Forms removes need for a custom mail API):
+
 1. Delete the folder.
 2. Remove unused dependencies from `package.json` (Express, etc. if present).
 
