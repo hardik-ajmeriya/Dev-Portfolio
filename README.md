@@ -1,8 +1,8 @@
 <div align="center">
 
-# Hardik Ajmeriya – DevOps & Full-Stack Portfolio
+# Hardik Ajmeriya – Full-Stack Portfolio
 
-Modern, performance‑optimized portfolio built with React, Vite, Tailwind CSS, Framer Motion, and Web3Forms. Focused on DevOps, Cloud, Automation, and clean UI/UX.
+Modern, performance‑optimized portfolio built with React, Vite, Tailwind CSS, Framer Motion, and Web3Forms. Focused on clean UI/UX.
 
 ![Stack](https://img.shields.io/badge/React-18-61dafb?logo=react&style=for-the-badge) ![Vite](https://img.shields.io/badge/Vite-Build-646cff?logo=vite&style=for-the-badge) ![Tailwind](https://img.shields.io/badge/Tailwind-CSS-38bdf8?logo=tailwindcss&style=for-the-badge) ![Framer Motion](https://img.shields.io/badge/Framer-Motion-black?logo=framer&style=for-the-badge) ![Web3Forms](https://img.shields.io/badge/Web3Forms-API-2563eb?style=for-the-badge)
 
@@ -18,7 +18,6 @@ Modern, performance‑optimized portfolio built with React, Vite, Tailwind CSS, 
 - Route‑level code splitting via `React.lazy` + `Suspense` spinner
 - Lazy‑loaded non‑critical images (`loading="lazy"`, `decoding="async"`)
 - Accessible animations (prefers‑reduced‑motion respected)
-- DevOps‑focused sections: Cloud Infrastructure, CI/CD Automation, Configuration Management
 - Web3Forms contact form (no backend server required) with validation & success/error states
 - SEO ready meta title & description
 - Auto scroll to top on route change (better navigation UX)
@@ -77,7 +76,7 @@ A minimal, professional status badge can be shown for projects that are still in
 ```js
 {
   id: 5,
-  title: "DCPVAS – DevOps CI/CD Pipeline Visualizer with AI Failure Analysis",
+  title: "DCPVAS – CI/CD Pipeline Visualizer with AI Failure Analysis",
   description: "…",
   image: "/images/dcpvas.png",
   techStack: ["Jenkins", "Node.js", "React", "Vite", "SSE"],
@@ -110,7 +109,7 @@ Make sure the key is a valid UUID and mapped to your email (e.g. `hardik.ajmeriy
 
 ```bash
 git clone <repo-url>
-cd Hardik_Dev_Portfolio
+cd Hardik_Dev_Portfolio/app
 npm install
 npm run dev
 ```
@@ -120,6 +119,7 @@ Visit: `http://localhost:5173`
 ### Build for Production
 
 ```bash
+cd app
 npm run build
 npm run preview    # Serve dist locally for verification
 ```
