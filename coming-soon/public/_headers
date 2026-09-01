@@ -21,9 +21,13 @@
   Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), microphone=(), payment=(), usb=(), interest-cohort=()
 
   # Strict CSP. There is no inline CSS or JS in this page, so no
-  # 'unsafe-inline' is needed anywhere — everything is 'self' plus the
-  # two Google Fonts hosts.
-  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+  # 'unsafe-inline' is needed anywhere.
+  #
+  # static.cloudflareinsights.com / cloudflareinsights.com are here because
+  # Cloudflare Web Analytics auto-injects its beacon script into the page.
+  # Without these two entries the beacon is blocked and you get no analytics.
+  # If you turn Web Analytics off for the zone, remove them again.
+  Content-Security-Policy: default-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://cloudflareinsights.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
 
   # Isolate this origin from cross-origin side channels.
   Cross-Origin-Opener-Policy: same-origin
