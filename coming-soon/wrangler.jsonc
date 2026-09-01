@@ -15,7 +15,12 @@
   "assets": {
     // Only ./public is served, so this config file is never exposed.
     "directory": "./public",
-    "not_found_handling": "single-page-application"
+
+    // This is a single static page, not an SPA. Unknown paths should 404
+    // rather than return index.html with a 200 — that keeps stylesheet and
+    // script paths (which are relative) resolving correctly, and stops
+    // scanners hitting /wp-admin from getting a 200 back.
+    "not_found_handling": "none"
   },
 
   "observability": {
