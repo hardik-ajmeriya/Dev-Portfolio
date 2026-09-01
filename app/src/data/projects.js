@@ -9,6 +9,13 @@
  *           which is a visible reminder to go and deploy it.
  * image   : file inside /public/images (use the .webp versions)
  * browser : the fake URL shown in the mockup's address bar
+ *
+ * presentation:
+ *   true  -> the image is already a finished mockup (it has its own
+ *            browser chrome / perspective / background), so it is shown
+ *            as-is with a soft float. Do NOT wrap it in more chrome.
+ *   false -> a plain screenshot; the site wraps it in a browser frame
+ *            and tilts it in 3D toward the cursor.
  */
 
 export const projects = [
@@ -19,6 +26,7 @@ export const projects = [
       'A structured medicine management and storefront system with automated categorisation and real-time backend synchronisation, integrated into a wider medical platform.',
     image: '/images/cureneed.webp',
     browser: 'cureneed.app',
+    presentation: true,
     tech: ['Next.js', 'React', 'Node.js', 'Express', 'Tailwind CSS'],
     githubUrl: 'https://github.com/hardik-ajmeriya/MedCare',
     liveUrl: '',
@@ -60,22 +68,10 @@ export const projects = [
     liveUrl: '',
     status: 'Completed',
   },
-  {
-    id: 'outpass',
-    title: 'Hostel OutPass Manager',
-    description:
-      'A Flutter application with separate student and warden portals, backed by a Node and MongoDB API, that digitises hostel outpass approvals end to end.',
-    image: '/images/outpass.webp',
-    browser: 'outpass.app',
-    tech: ['Flutter', 'Dart', 'Node.js', 'MongoDB'],
-    githubUrl: 'https://github.com/hardik-ajmeriya/hostel_outpass_manager',
-    liveUrl: '',
-    status: 'Completed',
-  },
 ];
 
 export const stats = [
-  { value: 5, suffix: '', label: 'Projects built end-to-end' },
+  { value: 4, suffix: '', label: 'Projects built end-to-end' },
   { value: 18, suffix: '+', label: 'CI/CD pipelines configured' },
   { value: 20, suffix: '+', label: 'Tools & services used' },
   { value: null, display: '<48h', label: 'Typical reply time' },

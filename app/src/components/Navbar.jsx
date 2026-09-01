@@ -24,7 +24,7 @@ export default function Navbar() {
       <nav className="fixed inset-x-0 top-0 z-50 text-white mix-blend-difference">
         <div className="mx-auto flex max-w-shell items-center justify-between px-6 py-6 md:px-10">
           <a href="#top" className="font-display text-[19px] font-extrabold tracking-[-0.03em]">
-            Hardik
+            Hardik Ajmeriya
           </a>
 
           <div className="hidden gap-9 md:flex">

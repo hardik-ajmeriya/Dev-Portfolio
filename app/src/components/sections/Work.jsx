@@ -3,6 +3,27 @@ import { projects } from '../../data/projects';
 import { useRevealGroup } from '../../hooks/useReveal';
 import Magnetic from '../Magnetic';
 
+/**
+ * For images that are already finished presentation mockups — they carry
+ * their own browser chrome, perspective and background, so wrapping them in
+ * another frame would nest a browser inside a browser. Shown as-is, with a
+ * soft lift on hover.
+ */
+function PresentationShot({ image, title }) {
+  return (
+    <div className="rv">
+      <img
+        src={image}
+        alt={title}
+        loading="lazy"
+        decoding="async"
+        data-cursor-grow
+        className="w-full rounded-xl transition-transform duration-700 ease-smooth hover:-translate-y-2"
+      />
+    </div>
+  );
+}
+
 /** A browser-chrome mockup that tilts in 3D toward the cursor. */
 function TiltWindow({ image, browser, title }) {
   const stageRef = useRef(null);
@@ -183,7 +204,11 @@ export default function Work() {
             </div>
 
             <div className={i % 2 === 1 ? 'lg:order-1' : ''}>
-              <TiltWindow image={p.image} browser={p.browser} title={p.title} />
+              {p.presentation ? (
+                <PresentationShot image={p.image} title={p.title} />
+              ) : (
+                <TiltWindow image={p.image} browser={p.browser} title={p.title} />
+              )}
             </div>
           </article>
         ))}
