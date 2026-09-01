@@ -5,6 +5,49 @@ The site is a static Vite/React build served by a Cloudflare Worker using
 Domain `hardikajmeriya.com` is already registered in the same Cloudflare account,
 which makes the DNS step almost automatic.
 
+There are **two Workers** in this repo, on purpose:
+
+| Worker | Source | Purpose |
+| --- | --- | --- |
+| `hardik-coming-soon` | `coming-soon/` | Live on the domain now |
+| `hardik-portfolio` | `app/` | The real site, deployed when ready |
+
+Keeping them separate means the unreleased site is never served or bundled
+anywhere public. Part 0 puts the coming-soon page live today; parts 1–4 cover
+the real site; part 6 is the swap.
+
+---
+
+## 0. Put the coming-soon page live (do this first)
+
+The coming-soon page is plain HTML with no build step, so this takes a couple of
+minutes.
+
+```bash
+cd coming-soon
+npx wrangler login      # once, opens a browser to authorise
+npx wrangler deploy
+```
+
+That gives you a `hardik-coming-soon.<subdomain>.workers.dev` URL. Open it and
+check it looks right.
+
+Then attach the real domain — in the Cloudflare dashboard:
+
+**Compute → Workers & Pages → `hardik-coming-soon` → Settings → Domains & Routes
+→ Add → Custom domain**
+
+Add both:
+
+- `hardikajmeriya.com`
+- `www.hardikajmeriya.com`
+
+DNS records are created automatically because the domain is registered in this
+same account. SSL takes a few minutes, then `hardikajmeriya.com` is live.
+
+To edit the page later, change `coming-soon/public/index.html` and run
+`npx wrangler deploy` again.
+
 ---
 
 ## 1. Install and test locally
@@ -89,19 +132,17 @@ their own preview URLs.
 
 ---
 
-## 4. Attach hardikajmeriya.com
+## 4. Test the real site on its workers.dev URL
 
-In the Worker → **Settings → Domains & Routes → Add → Custom domain**:
+Don't attach the domain yet. Open the `hardik-portfolio.<subdomain>.workers.dev`
+URL that the deploy produced and check:
 
-- add `hardikajmeriya.com`
-- add `www.hardikajmeriya.com`
-
-Because the domain is registered in the same Cloudflare account, the DNS records
-are created for you. No manual A or CNAME records, and no orange-cloud/SSL
-mismatch to debug — that whole class of problem only applies when the origin is
-somewhere else, like Vercel.
-
-SSL is issued automatically and usually takes a few minutes.
+- the 3D hero scene loads on desktop, and is skipped on mobile
+- project screenshots appear
+- the technology filter tabs work
+- **the contact form actually sends** — submit a real test message and confirm it
+  arrives in your inbox. This is the one that fails silently if
+  `VITE_WEB3FORMS_ACCESS_KEY` was not set in step 3.
 
 ---
 
@@ -118,15 +159,44 @@ npm run cf:tail      # live request logs
 
 ---
 
+## 6. Launch — swap the domain to the real site
+
+Once the real site checks out on its workers.dev URL:
+
+1. **Detach** the domain from the coming-soon Worker:
+   `hardik-coming-soon` → Settings → Domains & Routes → remove
+   `hardikajmeriya.com` and `www.hardikajmeriya.com`.
+
+2. **Attach** it to the real one:
+   `hardik-portfolio` → Settings → Domains & Routes → Add → Custom domain →
+   add both hostnames.
+
+Do it in that order. A hostname can only be attached to one Worker at a time, so
+adding before removing will just error. There is a brief gap between the two
+steps where the domain does not resolve to anything — it is seconds, and no one
+is watching yet.
+
+Once the real site is live and stable, you can delete the `hardik-coming-soon`
+Worker from the dashboard. The source stays in the repo if you ever want it
+again (a maintenance page, for instance).
+
+---
+
 ## Configuration reference
 
-`app/wrangler.jsonc`:
+`app/wrangler.jsonc` (the real site):
 
 - `assets.directory: ./dist` — where Vite writes the build
 - `assets.not_found_handling: single-page-application` — unknown paths serve
   `index.html` instead of a 404, so client-side anchors keep working
 - `observability.enabled: true` — free request and error metrics in the
   dashboard, replacing what Vercel Speed Insights did
+
+`coming-soon/wrangler.jsonc` (the temporary page):
+
+- `assets.directory: ./public` — note this is a subfolder, not `.`, so that
+  `wrangler.jsonc` itself is never served as a public file
+- no build step; `wrangler deploy` uploads the folder as-is
 
 ---
 
