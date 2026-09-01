@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -15,6 +15,9 @@ const schema = yup.object().shape({
     .required('Subject is required')
     .min(5, 'Subject must be at least 5 characters'),
   budget: yup.string(),
+  // Honeypot. Must be in the schema or yupResolver strips it from `data`
+  // before the submit handler can check it. Never shown, never required.
+  botcheck: yup.string(),
   message: yup
     .string()
     .required('Message is required')
@@ -37,10 +40,20 @@ function Field({ label, error, children }) {
   );
 }
 
+/** Minimum seconds between two submissions from the same browser. */
+const COOLDOWN_SECONDS = 45;
+/** A human cannot meaningfully fill this form faster than this. */
+const MIN_FILL_SECONDS = 3;
+
 export default function Contact() {
   const groupRef = useRevealGroup();
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null); // { ok: boolean, message: string }
+
+  // Timestamps used for the two spam checks below. Refs, not state, so
+  // updating them never triggers a re-render.
+  const mountedAt = useRef(Date.now());
+  const lastSentAt = useRef(0);
 
   const {
     register,
@@ -50,6 +63,31 @@ export default function Contact() {
   } = useForm({ resolver: yupResolver(schema) });
 
   const onSubmit = async (data) => {
+    // --- spam check 1: honeypot ---------------------------------------
+    // `botcheck` is hidden from humans. Bots that blindly fill every field
+    // will set it, and Web3Forms rejects those server-side too. Bailing here
+    // saves the request and gives the bot no feedback either way.
+    if (data.botcheck) {
+      setResult({ ok: true, message: "Message sent. I'll reply within 48 hours." });
+      reset();
+      return;
+    }
+
+    // --- spam check 2: filled impossibly fast --------------------------
+    const secondsOnPage = (Date.now() - mountedAt.current) / 1000;
+    if (secondsOnPage < MIN_FILL_SECONDS) {
+      setResult({ ok: false, message: 'That was a bit quick — please try again.' });
+      return;
+    }
+
+    // --- spam check 3: cooldown between sends --------------------------
+    const sinceLast = (Date.now() - lastSentAt.current) / 1000;
+    if (lastSentAt.current && sinceLast < COOLDOWN_SECONDS) {
+      const wait = Math.ceil(COOLDOWN_SECONDS - sinceLast);
+      setResult({ ok: false, message: `Already sent — please wait ${wait}s before sending again.` });
+      return;
+    }
+
     setSubmitting(true);
     setResult(null);
 
@@ -58,6 +96,7 @@ export default function Contact() {
 
       const formData = new FormData();
       formData.append('access_key', accessKey || '');
+      formData.append('botcheck', '');
       formData.append('name', data.name);
       formData.append('email', data.email);
       formData.append('replyto', data.email);
@@ -73,6 +112,7 @@ export default function Contact() {
       const json = await response.json();
 
       if (json.success) {
+        lastSentAt.current = Date.now();
         setResult({ ok: true, message: "Message sent. I'll reply within 48 hours." });
         reset();
       } else {
@@ -129,6 +169,16 @@ export default function Contact() {
 
           {/* Right: form */}
           <form onSubmit={handleSubmit(onSubmit)} noValidate className="rv space-y-5">
+            {/* Honeypot. Hidden from people and from screen readers, but a
+                scripted bot filling every input will trip it. Not a `hidden`
+                class — some bots skip those — but off-screen and inert. */}
+            <div aria-hidden="true" className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden">
+              <label>
+                Do not fill this in
+                <input {...register('botcheck')} type="text" tabIndex={-1} autoComplete="off" />
+              </label>
+            </div>
+
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="Your name" error={errors.name?.message}>
                 <input {...register('name')} className={inputBase} placeholder="Jane Doe" />
