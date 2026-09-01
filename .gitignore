@@ -81,6 +81,13 @@ Thumbs.db
 .idea/
 
 # ===============================
+# Cloudflare Workers
+# ===============================
+.wrangler/
+.dev.vars
+.dev.vars.*
+
+# ===============================
 # Optional / Future
 # ===============================
 coverage/
