@@ -1,0 +1,51 @@
+# Cloudflare Workers static-asset headers.
+# https://developers.cloudflare.com/workers/static-assets/headers/
+#
+# This file is parsed by Workers and is never served as a public asset.
+
+/*
+  # Force HTTPS for two years, including subdomains.
+  # Only safe because every hostname on this domain is served over HTTPS.
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+
+  # No framing at all — blocks clickjacking attempts.
+  X-Frame-Options: DENY
+
+  # Stop browsers guessing content types.
+  X-Content-Type-Options: nosniff
+
+  # Don't leak the URL to third parties on outbound clicks.
+  Referrer-Policy: strict-origin-when-cross-origin
+
+  # This page needs none of these device APIs.
+  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), microphone=(), payment=(), usb=(), interest-cohort=()
+
+  # Strict CSP. There is no inline CSS or JS in this page, so no
+  # 'unsafe-inline' is needed anywhere — everything is 'self' plus the
+  # two Google Fonts hosts.
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+
+  # Isolate this origin from cross-origin side channels.
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+
+  # Placeholder should not be indexed. Belt and braces with the meta tag.
+  X-Robots-Tag: noindex, nofollow
+
+# The HTML changes whenever the page is edited, so always revalidate it.
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Assets have stable filenames and no content hash, so keep the cache
+# short enough that an edit goes live promptly.
+/styles.css
+  Cache-Control: public, max-age=3600
+
+/sign.js
+  Cache-Control: public, max-age=3600
+
+/favicon.png
+  Cache-Control: public, max-age=86400

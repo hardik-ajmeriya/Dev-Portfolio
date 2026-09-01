@@ -1,0 +1,6 @@
+# Temporary placeholder — keep it out of search results so the first
+# indexed version of this domain is the real site.
+# Delete this file at launch.
+
+User-agent: *
+Disallow: /

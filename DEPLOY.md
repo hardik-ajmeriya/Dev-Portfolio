@@ -20,19 +20,45 @@ the real site; part 6 is the swap.
 
 ## 0. Put the coming-soon page live (do this first)
 
-The coming-soon page is plain HTML with no build step, so this takes a couple of
-minutes.
+Static HTML, no build step. Roughly five minutes end to end.
+
+### 0a. Secure the account before you deploy anything
+
+Do these once. They protect the domain itself, which matters more than the page
+on it — losing control of the domain is the one mistake that is genuinely hard
+to undo.
+
+1. **Two-factor auth on Cloudflare.** My Profile → Authentication → 2FA. Your
+   Cloudflare account now controls both the domain and the hosting; if it is
+   protected only by a password, that is the single point of failure.
+2. **Registrar lock.** Domains → `hardikajmeriya.com` → Configuration → confirm
+   the lock is on. Blocks unauthorised transfers away from your account.
+3. **WHOIS privacy.** Same page. Cloudflare redacts it free — without it, your
+   home address and phone number are in a public database that spammers scrape.
+
+### 0b. Authorise the CLI
 
 ```bash
 cd coming-soon
-npx wrangler login      # once, opens a browser to authorise
+npx wrangler login     # opens a browser, OAuth — no key stored in the repo
+```
+
+`wrangler login` uses short-lived OAuth credentials stored outside the project.
+Do **not** put a Cloudflare API token in `.env` or anywhere in the repo. If you
+later automate deploys from CI, create a **scoped** API token with only
+`Workers Scripts: Edit`, never the Global API Key, which can do anything to
+every zone on your account.
+
+### 0c. Deploy
+
+```bash
 npx wrangler deploy
 ```
 
-That gives you a `hardik-coming-soon.<subdomain>.workers.dev` URL. Open it and
-check it looks right.
+You get a `hardik-coming-soon.<subdomain>.workers.dev` URL. Open it and check
+the sign swings and the fonts load.
 
-Then attach the real domain — in the Cloudflare dashboard:
+### 0d. Attach the domain
 
 **Compute → Workers & Pages → `hardik-coming-soon` → Settings → Domains & Routes
 → Add → Custom domain**
@@ -43,10 +69,66 @@ Add both:
 - `www.hardikajmeriya.com`
 
 DNS records are created automatically because the domain is registered in this
-same account. SSL takes a few minutes, then `hardikajmeriya.com` is live.
+same account. Certificates are issued within a few minutes.
 
-To edit the page later, change `coming-soon/public/index.html` and run
+### 0e. Turn on the zone-level TLS settings
+
+Under **SSL/TLS** for the domain:
+
+- **Overview → Full (strict)**
+- **Edge Certificates → Always Use HTTPS: On**
+- **Edge Certificates → Minimum TLS Version: 1.2**
+
+### 0f. Verify it actually shipped hardened
+
+```bash
+curl -sI https://hardikajmeriya.com | grep -Ei 'strict-transport|content-security|x-frame|x-content-type|referrer|permissions|robots'
+```
+
+You should see the HSTS, CSP, `X-Frame-Options: DENY`, `nosniff`,
+`Referrer-Policy`, `Permissions-Policy` and `X-Robots-Tag` lines. If they are
+missing, the `_headers` file did not deploy — confirm it sits in
+`coming-soon/public/`.
+
+Also confirm the config file is not public — this must return **404**:
+
+```bash
+curl -so /dev/null -w '%{http_code}\n' https://hardikajmeriya.com/_headers
+```
+
+To edit the page later: change the files in `coming-soon/public/` and run
 `npx wrangler deploy` again.
+
+---
+
+## What is actually deployed, and why it is safe
+
+The page is five static files. There is no server, no database, no form, no
+user input and no cookies — which removes most of the attack surface a site
+normally has. What remains is handled in `coming-soon/public/_headers`:
+
+| Header | What it stops |
+| --- | --- |
+| `Content-Security-Policy` | Injected scripts. Strict: `default-src 'none'`, no `unsafe-inline` anywhere |
+| `Strict-Transport-Security` | Downgrade to HTTP for two years |
+| `X-Frame-Options: DENY` | Clickjacking via iframe |
+| `X-Content-Type-Options` | MIME-type sniffing |
+| `Referrer-Policy` | Leaking your URLs to third parties |
+| `Permissions-Policy` | Access to camera, mic, geolocation, etc. |
+| `Cross-Origin-*-Policy` | Cross-origin side-channel reads |
+
+The CSP is strict — `unsafe-inline` appears nowhere — because the page's CSS and
+JS live in `styles.css` and `sign.js` rather than inline in the HTML. If you add
+an inline `<style>` block or an `onclick=` attribute later, **it will be blocked
+and silently stop working**. Put new CSS in `styles.css` and new JS in `sign.js`.
+
+`_headers` is parsed by Workers and is never served, so its contents are not
+public. Verify with the 404 check in step 0f.
+
+The page is set to `noindex` in both `robots.txt` and a meta tag, so Google's
+first indexed impression of the domain is the real site rather than a
+placeholder. **Delete `robots.txt` and remove the robots meta tag at launch**, or
+your finished site will stay invisible in search.
 
 ---
 
@@ -176,9 +258,21 @@ adding before removing will just error. There is a brief gap between the two
 steps where the domain does not resolve to anything — it is seconds, and no one
 is watching yet.
 
+3. **Undo the noindex.** The coming-soon page deliberately blocks search
+   engines. Once the real site is on the domain, make sure it is *not* carrying
+   those rules — the real site has no `robots.txt` and no robots meta tag, so
+   this is automatic when you swap Workers. But if you ever copy files across,
+   check for it.
+
 Once the real site is live and stable, you can delete the `hardik-coming-soon`
 Worker from the dashboard. The source stays in the repo if you ever want it
 again (a maintenance page, for instance).
+
+Consider carrying the `_headers` file across to `app/public/` too, so the real
+site ships the same protections. It will need a looser CSP — the real site loads
+Devicon logos from `cdn.jsdelivr.net` and posts the contact form to
+`api.web3forms.com`, so `img-src` and `connect-src` must allow those. Ask me and
+I will write it.
 
 ---
 
