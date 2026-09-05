@@ -141,17 +141,44 @@ asserting exactly that.
 
 ### Getting data to look at
 
-The local D1 database starts empty. Submit the contact form at
-`localhost:5173` a few times and the rows will appear in the panel.
-
-To seed a few directly:
+The local database starts empty. Either submit the contact form at
+`localhost:5173`, or seed ten realistic enquiries:
 
 ```bash
-npx wrangler d1 execute hardik-enquiries --local --command "INSERT INTO enquiries (name,email,company,project_type,budget,timeline,message) VALUES ('Priya Sharma','priya@northwind.example','Northwind Logistics','SaaS product','\$3,000 – \$5,000','Within 1 month','We track deliveries in spreadsheets and need a multi-tenant dashboard for dispatch and drivers.')"
+npm run seed:local     # insert the dummy set
+npm run seed:clear     # remove it again
 ```
 
-Local and production databases are entirely separate — nothing you do here
-touches real enquiries.
+The seed is **idempotent** — running it twice does not duplicate rows, because
+it deletes anything at `@seed.test` first. Every seeded address uses that
+domain, so clearing is unambiguous and nothing real is ever caught by it.
+
+The rows are chosen to exercise every state the panel can show:
+
+| Covers | Row |
+| --- | --- |
+| All five statuses | 4 new, 2 replied, 1 won, 1 lost, 2 archived |
+| Overdue follow-up (amber flag) | Anjali Mehta |
+| Future follow-up | Daniel Okafor, Marcus Bell, Rebecca Lin |
+| No company (em-dash fallback) | Sofia Rinaldi, Tom Whitfield |
+| Long Markdown brief (drawer scroll) | Rebecca Lin, 715 chars |
+| Dates spanning a month (sorting) | 2 hours ago → 30 days ago |
+
+Two rows are deliberately hostile, so the guards can be checked by looking
+rather than by trusting a test:
+
+- **`<script>alert(1)</script> Ravi`** — the panel must show this as literal
+  text. If a dialog ever appears, escaping has broken.
+- **`=cmd|'/c calc'!A1`** — export the CSV and open it. The cell must read as
+  text, not evaluate as a formula.
+
+> Seeds live in `seeds/`, **not** `migrations/`. Anything in `migrations/` runs
+> against production on the next `--remote` apply, and fake client records in
+> your real pipeline would be genuinely confusing to debug. Both npm scripts
+> hardcode `--local` for the same reason.
+
+Local and production databases are entirely separate — nothing here touches
+real enquiries.
 
 ---
 

@@ -12,6 +12,10 @@
     "preview": "vite preview",
     "deploy": "npm run build && wrangler deploy",
     "secrets": "wrangler secret put RESEND_API_KEY",
+    "db:migrate:local": "wrangler d1 migrations apply hardik-enquiries --local",
+    "db:migrate": "wrangler d1 migrations apply hardik-enquiries --remote",
+    "seed:local": "wrangler d1 execute hardik-enquiries --local --file=seeds/dev-seed.sql",
+    "seed:clear": "wrangler d1 execute hardik-enquiries --local --command \"DELETE FROM enquiries WHERE email LIKE '%@seed.test'\"",
     "cf:login": "wrangler login",
     "cf:tail": "wrangler tail"
   },
