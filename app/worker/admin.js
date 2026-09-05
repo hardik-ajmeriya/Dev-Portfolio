@@ -29,6 +29,27 @@ const VALID_STATUSES = ['new', 'replied', 'won', 'lost', 'archived'];
  * policy by mistake, only this address can read the data.
  */
 export function requireAccess(request, env) {
+  // ---- local development bypass ----------------------------------------
+  // Cloudflare Access does not exist in `wrangler dev`, so without this the
+  // panel is unreachable locally.
+  //
+  // TWO independent conditions must hold, and neither can be true in
+  // production:
+  //   1. the request hostname is localhost/127.0.0.1 — on the live site it is
+  //      always hardikajmeriya.com, so this alone blocks it
+  //   2. DEV_ADMIN_EMAIL is set, which only exists in .dev.vars — a file that
+  //      is gitignored and never uploaded by `wrangler deploy`
+  //
+  // Requiring both means forgetting to remove something cannot expose the
+  // panel. This is deliberately not a commented-out auth check, which is the
+  // pattern that gets accidentally shipped.
+  const { hostname } = new URL(request.url);
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+
+  if (isLocalhost && env.DEV_ADMIN_EMAIL) {
+    return { ok: true, email: env.DEV_ADMIN_EMAIL, dev: true };
+  }
+
   const email = request.headers.get('cf-access-authenticated-user-email');
 
   if (!email) {
@@ -37,7 +58,7 @@ export function requireAccess(request, env) {
   if (env.ADMIN_EMAIL && email.toLowerCase() !== env.ADMIN_EMAIL.toLowerCase()) {
     return { ok: false, response: json({ error: 'Not authorised.' }, 403) };
   }
-  return { ok: true, email };
+  return { ok: true, email, dev: false };
 }
 
 /** Store a submission. Never throws — a DB failure must not lose the email. */

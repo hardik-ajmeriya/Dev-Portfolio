@@ -142,5 +142,41 @@ await t('delete removes the row', async()=>{
 });
 
 console.log();
+console.log('=== LOCAL DEV BYPASS (must be impossible in production) ===');
+const devEnv = {...env, DEV_ADMIN_EMAIL:'hardikpt95@gmail.com'};
+
+await t('localhost + DEV_ADMIN_EMAIL -> allowed', async()=>{
+  const r = await mod.fetch(new Request('http://localhost:8787/api/admin/enquiries'), devEnv);
+  eq(r.status,200,'status');
+});
+await t('127.0.0.1 also allowed', async()=>{
+  const r = await mod.fetch(new Request('http://127.0.0.1:8787/api/admin/enquiries'), devEnv);
+  eq(r.status,200,'status');
+});
+await t('PRODUCTION hostname + DEV_ADMIN_EMAIL set -> still 401', async()=>{
+  // the dangerous case: variable leaked into production config
+  const r = await mod.fetch(new Request('https://hardikajmeriya.com/api/admin/enquiries'), devEnv);
+  eq(r.status,401,'status');
+});
+await t('localhost WITHOUT DEV_ADMIN_EMAIL -> 401', async()=>{
+  const r = await mod.fetch(new Request('http://localhost:8787/api/admin/enquiries'), env);
+  eq(r.status,401,'status');
+});
+await t('a lookalike hostname is not treated as local', async()=>{
+  const r = await mod.fetch(new Request('https://localhost.evil.com/api/admin/enquiries'), devEnv);
+  eq(r.status,401,'status');
+});
+await t('dev panel carries the LOCAL DEV warning banner', async()=>{
+  const r = await mod.fetch(new Request('http://localhost:8787/admin'), devEnv);
+  const html = await r.text();
+  if(!html.includes('LOCAL DEV')) throw new Error('missing dev banner');
+});
+await t('production panel has NO dev banner', async()=>{
+  const r = await mod.fetch(new Request('https://hardikajmeriya.com/admin',{headers:ADMIN}), env);
+  const html = await r.text();
+  if(html.includes('LOCAL DEV')) throw new Error('dev banner leaked into production');
+});
+
+console.log();
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail?1:0);

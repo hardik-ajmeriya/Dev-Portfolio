@@ -11,7 +11,19 @@
  * Styling mirrors the site's design tokens so it feels like the same product.
  */
 
-export function adminPage(email) {
+export function adminPage(email, isDev = false) {
+  const devBanner = isDev
+    ? `<div style="background:#fef3c7;border-bottom:1px solid #fcd34d;color:#92400e;
+                  padding:10px 24px;font:600 12.5px/1.4 'JetBrains Mono',monospace;
+                  letter-spacing:.04em;text-align:center">
+         LOCAL DEV — Cloudflare Access is NOT protecting this page. Anyone who can
+         reach this port can read your enquiries.
+       </div>`
+    : '';
+  return adminHtml(email, devBanner);
+}
+
+function adminHtml(email, devBanner) {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -105,6 +117,8 @@ export function adminPage(email) {
 </style>
 </head>
 <body>
+
+${devBanner}
 
 <header>
   <div class="bar">

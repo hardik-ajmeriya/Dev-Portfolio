@@ -91,19 +91,67 @@ Visit `hardikajmeriya.com/admin`, sign in, and you are in.
 
 ---
 
-## Local development
+## Running it locally
 
-D1 runs locally with `--local`, and there is no Cloudflare Access in front of
-`wrangler dev`. To work on the panel locally, temporarily comment out the
-`requireAccess` call in `worker/index.js`, or send the header yourself:
+Cloudflare Access does not exist in `wrangler dev`, so the Worker has a
+dev-only bypass. It requires **two** conditions, neither of which can be true
+in production:
 
-```bash
-curl -H "cf-access-authenticated-user-email: hardikpt95@gmail.com" \
-  http://127.0.0.1:8787/api/admin/enquiries
+1. the request hostname is `localhost` or `127.0.0.1`
+2. `DEV_ADMIN_EMAIL` is set — and that only lives in `.dev.vars`, which is
+   gitignored and never uploaded by `wrangler deploy`
+
+So even if the variable somehow reached production, the hostname check still
+refuses. There is deliberately **no commented-out auth check** to forget.
+
+### Setup
+
+Add to `app/.dev.vars`:
+
+```
+RESEND_API_KEY=your-resend-key
+DEV_ADMIN_EMAIL=hardikpt95@gmail.com
 ```
 
-Never deploy with that check commented out. The tests in
-`worker/admin.test.mjs` will fail if you do, which is deliberate.
+Apply the migration to the local database:
+
+```bash
+npx wrangler d1 migrations apply hardik-enquiries --local
+```
+
+### Run
+
+```bash
+# terminal 1
+cd app && npm run dev:api
+
+# terminal 2
+cd app && npm run dev
+```
+
+Then open **http://localhost:5173/admin** — Vite proxies both `/api` and
+`/admin` to the Worker, so the panel and the site share one URL and one port.
+
+You can also go straight to `http://127.0.0.1:8787/admin`.
+
+The local panel shows an amber **LOCAL DEV** banner across the top, because a
+page full of client data that looks identical in both environments is a
+mistake waiting to happen. Production never renders it — there is a test
+asserting exactly that.
+
+### Getting data to look at
+
+The local D1 database starts empty. Submit the contact form at
+`localhost:5173` a few times and the rows will appear in the panel.
+
+To seed a few directly:
+
+```bash
+npx wrangler d1 execute hardik-enquiries --local --command "INSERT INTO enquiries (name,email,company,project_type,budget,timeline,message) VALUES ('Priya Sharma','priya@northwind.example','Northwind Logistics','SaaS product','\$3,000 – \$5,000','Within 1 month','We track deliveries in spreadsheets and need a multi-tenant dashboard for dispatch and drivers.')"
+```
+
+Local and production databases are entirely separate — nothing you do here
+touches real enquiries.
 
 ---
 

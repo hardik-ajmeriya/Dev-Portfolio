@@ -152,7 +152,7 @@ export default {
     if (url.pathname === '/admin' || url.pathname === '/admin/') {
       const auth = requireAccess(request, env);
       if (!auth.ok) return auth.response;
-      return new Response(adminPage(auth.email), {
+      return new Response(adminPage(auth.email, auth.dev), {
         headers: {
           'content-type': 'text/html; charset=utf-8',
           // Never cache a page containing client data.
