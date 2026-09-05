@@ -7,26 +7,33 @@ configure in the Cloudflare dashboard.
 
 ## The short version
 
-This site is **static files served from Cloudflare's edge**. There is no origin
-server of yours, no database, no backend API, and no code of yours executing on
-a request. That removes most of the attack surface a normal website has:
+This is **static files served from Cloudflare's edge, plus a Worker** that
+handles the contact form and a private admin panel backed by a D1 database.
+
+There is still no origin server of yours to attack and no VM to patch. But the
+Worker and D1 mean this is no longer purely static, and the threat model has to
+say so:
 
 | Common attack | Applies here? |
 | --- | --- |
-| SQL injection | No — there is no database |
-| Server RCE / shell | No — there is no server of yours running code |
-| Auth bypass / session hijack | No — there are no accounts or sessions |
+| SQL injection | **Applies** — D1 stores enquiries. Mitigated: every query is parameterised via `.bind()`, including the LIKE search. No SQL is ever built by string concatenation |
+| Server RCE / shell | No — Workers run in a V8 isolate, no shell, no filesystem |
+| Auth bypass on the admin panel | **Applies** — mitigated by Cloudflare Access at the edge plus an `ADMIN_EMAIL` check in the Worker. See ADMIN.md |
+| Personal data breach | **Applies** — client names, emails and briefs are now stored. This is the change that raised the stakes |
 | File upload abuse | No — nothing accepts uploads |
 | Origin IP discovery → direct attack | No — there is no origin to find |
 | DDoS / request flood | Absorbed by Cloudflare (see below) |
-| XSS | Mitigated by CSP; also no user input is rendered |
+| XSS | Mitigated by CSP. The admin panel escapes every value it renders |
+| CSV formula injection | **Applies** to the admin export — mitigated by prefixing cells starting `= + - @` |
 | Clickjacking | Blocked by `X-Frame-Options` / `frame-ancestors` |
 | Contact form spam | **Real risk** — mitigated, see below |
-| Cloudflare account takeover | **The biggest real risk** — see below |
+| Cloudflare account takeover | **The biggest real risk** — see below, and it now guards a client database, not just a website |
 
-Most of what people mean by "protect from cyber attacks" simply does not apply
-to a static site. The two things that genuinely matter are at the bottom of
-that table.
+> **This section previously claimed there was no database and no backend.** That
+> was true before the enquiry Worker and admin panel were added. It is recorded
+> here because a security document that understates the attack surface is worse
+> than no document — if you add a feature that changes this list, change this
+> list.
 
 ---
 

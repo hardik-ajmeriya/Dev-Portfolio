@@ -32,7 +32,7 @@
     {
       "binding": "DB",
       "database_name": "hardik-enquiries",
-      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID",
+      "database_id": "dd849afc-c69c-4c2b-aa30-fc46270e8a4a",
       "migrations_dir": "migrations"
     }
   ],

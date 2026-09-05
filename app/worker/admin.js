@@ -141,6 +141,12 @@ async function updateEnquiry(id, body, env) {
   if (!sets.length) return json({ error: 'Nothing to update.' }, 422);
 
   binds.push(id);
+
+  // This is the only place a query string is assembled rather than fixed, so
+  // it deserves the scrutiny: every element of `sets` is a hardcoded literal
+  // above ('status = ?', 'notes = ?', 'follow_up_on = ?'). Only column names
+  // are interpolated; every user-supplied value goes through `binds`. Keep it
+  // that way — never push a caller-controlled string into `sets`.
   const result = await env.DB.prepare(
     `UPDATE enquiries SET ${sets.join(', ')} WHERE id = ?`
   )
