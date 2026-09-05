@@ -129,20 +129,45 @@ export default function Contact() {
     setSubmitting(true);
 
     try {
+      const company = data.company?.trim();
+
+      // Subject carries the two facts that decide whether this is worth
+      // opening now — visible in the inbox list without opening anything.
+      // Kept under ~70 characters so Gmail does not truncate it.
+      const subject = `New enquiry — ${data.name} · ${data.budget} · ${data.timeline}`;
+
+      // One scannable line at the top of the email, so the whole enquiry can
+      // be triaged before reading any of the individual rows.
+      const summary = [data.name, company, data.projectType, data.budget, data.timeline]
+        .filter(Boolean)
+        .join('  ·  ');
+
+      // Timestamped in your timezone rather than the server's (US East).
+      const submittedAt = new Intl.DateTimeFormat('en-IN', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+        timeZone: 'Asia/Kolkata',
+      }).format(new Date());
+
       const payload = new FormData();
       payload.append('access_key', import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || '');
-      payload.append('subject', `New project enquiry — ${data.name}`);
+      payload.append('subject', subject);
       payload.append('from_name', 'hardikajmeriya.com');
       payload.append('botcheck', '');
       payload.append('replyto', data.email);
 
+      // Field names are the email's labels, and this order is the email's
+      // layout. Summary first for triage; the long overview last so the
+      // scannable facts are not pushed below it.
+      payload.append('Summary', summary);
       payload.append('Full name', data.name);
       payload.append('Business email', data.email);
-      payload.append('Company', data.company || 'Not provided');
+      payload.append('Company', company || '—');
       payload.append('Project type', data.projectType);
       payload.append('Estimated budget', data.budget);
       payload.append('Timeline', data.timeline);
-      payload.append('Project overview', data.message);
+      payload.append('Project overview', data.message.trim());
+      payload.append('Submitted', `${submittedAt} IST`);
 
       // Captcha token, if one is present. Inactive by default.
       //
