@@ -129,64 +129,23 @@ export default function Contact() {
     setSubmitting(true);
 
     try {
-      const company = data.company?.trim();
-
-      // Subject carries the two facts that decide whether this is worth
-      // opening now — visible in the inbox list without opening anything.
-      // Kept under ~70 characters so Gmail does not truncate it.
-      const subject = `New enquiry — ${data.name} · ${data.budget} · ${data.timeline}`;
-
-      // One scannable line at the top of the email, so the whole enquiry can
-      // be triaged before reading any of the individual rows.
-      const summary = [data.name, company, data.projectType, data.budget, data.timeline]
-        .filter(Boolean)
-        .join('  ·  ');
-
-      // Timestamped in your timezone rather than the server's (US East).
-      const submittedAt = new Intl.DateTimeFormat('en-IN', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-        timeZone: 'Asia/Kolkata',
-      }).format(new Date());
-
-      const payload = new FormData();
-      payload.append('access_key', import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || '');
-      payload.append('subject', subject);
-      payload.append('from_name', 'hardikajmeriya.com');
-      payload.append('botcheck', '');
-      payload.append('replyto', data.email);
-
-      // Field names are the email's labels, and this order is the email's
-      // layout. Summary first for triage; the long overview last so the
-      // scannable facts are not pushed below it.
-      payload.append('Summary', summary);
-      payload.append('Full name', data.name);
-      // Must be named exactly `email` or `Email`: Web3Forms' autoresponder
-      // looks for that field to decide where to send the auto-reply. Named
-      // 'Business email' it would silently never fire.
-      payload.append('Email', data.email);
-      payload.append('Company', company || '—');
-      payload.append('Project type', data.projectType);
-      payload.append('Estimated budget', data.budget);
-      payload.append('Timeline', data.timeline);
-      payload.append('Project overview', data.message.trim());
-      payload.append('Submitted', `${submittedAt} IST`);
-
-      // Captcha token, if one is present. Inactive by default.
-      //
-      // NOTE: Cloudflare Turnstile and reCaptcha are Web3Forms PRO features.
-      // On the free plan the captcha option is hCaptcha, which posts its token
-      // as `h-captcha-response`. Both names are forwarded here so enabling
-      // either one is a front-end change only. See WEB3FORMS.md.
-      const turnstileToken = window.turnstile?.getResponse?.();
-      if (turnstileToken) payload.append('cf-turnstile-response', turnstileToken);
-
-      const hcaptchaToken = window.hcaptcha?.getResponse?.();
-      if (hcaptchaToken) payload.append('h-captcha-response', hcaptchaToken);
-
-      const response = await fetch('https://api.web3forms.com/submit', {
+      // Posts to our own Worker (app/worker/index.js), not to Web3Forms
+      // directly. The Worker re-validates server-side, forwards the
+      // notification, and sends the client auto-reply — which keeps both the
+      // Resend and Web3Forms keys out of this bundle entirely.
+      const response = await fetch('/api/enquiry', {
         method: 'POST',
-        body: payload,
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          company: data.company,
+          projectType: data.projectType,
+          budget: data.budget,
+          timeline: data.timeline,
+          message: data.message,
+          botcheck: data.botcheck || '',
+        }),
       });
       const json = await response.json();
 
