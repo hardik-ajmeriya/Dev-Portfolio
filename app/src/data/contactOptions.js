@@ -9,6 +9,7 @@
 
 export const PROJECT_TYPES = [
   'New web application',
+  'SaaS product',
   'Rebuild or redesign of an existing app',
   'API or backend work',
   'Cloud setup and deployment',
