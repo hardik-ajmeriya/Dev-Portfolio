@@ -1,0 +1,47 @@
+# Cloudflare Workers static-asset headers for the main site.
+# https://developers.cloudflare.com/workers/static-assets/headers/
+#
+# Parsed by Workers — never served as a public asset.
+
+/*
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), microphone=(), payment=(), usb=(), interest-cohort=()
+  Cross-Origin-Opener-Policy: same-origin
+
+  # CSP for the real site. Wider than the coming-soon page because this one
+  # actually loads third-party resources:
+  #   static.cloudflareinsights.com  Cloudflare Web Analytics beacon
+  #   cdn.jsdelivr.net               Devicon technology logos (Tech section)
+  #   api.web3forms.com              contact form submissions
+  #   fonts.googleapis/gstatic       Bricolage Grotesque, Inter, JetBrains Mono
+  #
+  # 'unsafe-inline' appears for style-src ONLY, and it is genuinely required:
+  # the site sets inline style attributes at runtime in several places —
+  # React style={{...}} props (stagger delays in Hero and Tech), the cursor,
+  # magnetic buttons and card tilt writing element.style.transform, and
+  # three.js sizing its own canvas. Those are inline styles, which CSP blocks
+  # without this. Note the compiled CSS itself is a linked stylesheet, so it
+  # is NOT the reason.
+  #
+  # script-src stays clean — no 'unsafe-inline', no 'unsafe-eval'. That is the
+  # directive that actually matters for XSS; inline *styles* are far lower risk.
+  Content-Security-Policy: default-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://api.web3forms.com https://cloudflareinsights.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+
+# HTML must always revalidate so a deploy is picked up immediately.
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Vite fingerprints these filenames with a content hash, so they can be
+# cached hard and forever — a new build produces new filenames.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Images keep stable filenames, so cache for a day rather than a year.
+/images/*
+  Cache-Control: public, max-age=86400

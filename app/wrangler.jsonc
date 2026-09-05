@@ -1,0 +1,23 @@
+{
+  // Cloudflare Workers configuration
+  // Docs: https://developers.cloudflare.com/workers/static-assets/
+  "$schema": "node_modules/wrangler/config-schema.json",
+
+  "name": "hardik-portfolio",
+  "compatibility_date": "2026-09-01",
+
+  "assets": {
+    // Vite writes the production build here.
+    "directory": "./dist",
+
+    // The site is a single-page app: any unknown path should serve
+    // index.html and let the client render it, rather than 404.
+    "not_found_handling": "single-page-application"
+  },
+
+  "observability": {
+    // Free request/error metrics in the Cloudflare dashboard.
+    // This replaces what Vercel Speed Insights was doing.
+    "enabled": true
+  }
+}

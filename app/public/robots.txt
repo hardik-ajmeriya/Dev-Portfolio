@@ -1,0 +1,71 @@
+# hardikajmeriya.com
+#
+# Everything is open. This is a portfolio — being read, indexed and quoted
+# is the entire point.
+
+User-agent: *
+Allow: /
+
+# ---------------------------------------------------------------------------
+# AI crawlers, explicitly allowed.
+#
+# These are listed by name deliberately. Being crawled by them is how you get
+# mentioned when someone asks an assistant "who can build me a MERN app" or
+# "who is Hardik Ajmeriya". Blocking them — which many sites now do by
+# default — would remove you from that surface entirely.
+#
+# Note none of these execute JavaScript, which is why this site is prerendered
+# to static HTML at build time (see app/prerender.js).
+# ---------------------------------------------------------------------------
+
+# OpenAI — training, search and live user fetches
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+# Anthropic
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+# Perplexity
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# Google's AI products (separate from Googlebot search indexing)
+User-agent: Google-Extended
+Allow: /
+
+# Microsoft / Copilot
+User-agent: bingbot
+Allow: /
+
+# Apple
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Meta
+User-agent: Meta-ExternalAgent
+Allow: /
+
+# Common Crawl — feeds many downstream datasets
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://hardikajmeriya.com/sitemap.xml

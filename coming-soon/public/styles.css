@@ -1,0 +1,301 @@
+:root{
+    --night:#14110f;
+    --night-2:#1d1916;
+    --cream:#f2e7d5;
+    --brass:#c9a227;
+    --wood-1:#7a4f2a;
+    --wood-2:#5e3a1e;
+    --wood-3:#452a15;
+    --rope:#b9a184;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:'Karla',system-ui,sans-serif;
+    background:var(--night);
+    color:var(--cream);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ambient spill — kept low, the COB fixtures now do the real lighting */
+  .glow{
+    position:fixed;left:50%;top:-18vh;transform:translateX(-50%);
+    width:min(120vw,1100px);height:80vh;pointer-events:none;z-index:0;
+    background:radial-gradient(ellipse at 50% 0%,
+      rgba(255,196,110,.10) 0%,
+      rgba(255,170,80,.05) 32%,
+      rgba(0,0,0,0) 68%);
+  }
+
+  /* ---------- COB spotlights ---------- */
+  /* Two chip-on-board fixtures on ceiling stems, angled inward so their
+     beams converge on the sign. Sits behind .stage (z-index 2). */
+  .rig{
+    position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden;
+  }
+  .cob{
+    position:absolute;top:0;
+    transform-origin:50% 0;   /* pivots at the ceiling, like a real yoke */
+  }
+  .cob.l{left:clamp(26px,17vw,290px);transform:rotate(21deg)}
+  .cob.r{right:clamp(26px,17vw,290px);transform:rotate(-21deg)}
+
+  /* fixture housing */
+  .head{
+    display:block;position:relative;margin:0 auto;
+    width:46px;height:21px;
+    border-radius:5px 5px 9px 9px;
+    background:linear-gradient(180deg,#332b26,#171310);
+    box-shadow:0 5px 12px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,220,170,.12);
+  }
+  /* stem up to the ceiling */
+  .head::before{
+    content:'';position:absolute;top:-16px;left:50%;
+    width:5px;height:17px;margin-left:-2.5px;border-radius:2px;
+    background:linear-gradient(180deg,#2a2320,#1a1512);
+  }
+  /* the COB chip itself — a small, very bright emitting rectangle */
+  .head::after{
+    content:'';position:absolute;bottom:3px;left:50%;
+    width:28px;height:7px;margin-left:-14px;border-radius:2px;
+    background:linear-gradient(180deg,#fffdf5,#ffd9a0);
+    box-shadow:
+      0 0 14px 4px rgba(255,196,112,.90),
+      0 0 42px 13px rgba(255,168,74,.42);
+  }
+
+  /* the beam */
+  .cone{
+    --w:clamp(170px,25vw,300px);
+    position:absolute;top:22px;left:50%;
+    width:var(--w);margin-left:calc(var(--w) / -2);
+    height:82vh;
+    /* narrow at the lens, widening as it travels — a real cone section */
+    clip-path:polygon(43% 0, 57% 0, 100% 100%, 0 100%);
+    background:linear-gradient(180deg,
+      rgba(255,208,144,.34) 0%,
+      rgba(255,192,122,.17) 30%,
+      rgba(255,176,98,.06) 60%,
+      rgba(255,170,90,0) 85%);
+    filter:blur(9px);
+    mix-blend-mode:screen;
+    animation:cobBreathe 6.5s ease-in-out infinite;
+  }
+  .cob.r .cone{animation-delay:-2.2s}
+  @keyframes cobBreathe{
+    0%,100%{opacity:.88}
+    50%    {opacity:1}
+  }
+  /* vignette */
+  .vig{
+    position:fixed;inset:0;pointer-events:none;z-index:4;
+    background:radial-gradient(ellipse at 50% 35%, rgba(0,0,0,0) 40%, rgba(0,0,0,.55) 100%);
+  }
+  ::selection{background:var(--brass);color:var(--night)}
+
+  .stage{
+    position:relative;z-index:2;height:100%;
+    display:flex;flex-direction:column;align-items:center;
+  }
+
+  /* ---------- single ceiling screw (the pivot) ---------- */
+  .mount{
+    position:relative;flex:none;z-index:3;
+    width:34px;height:34px;border-radius:50%;
+    background:linear-gradient(180deg,#2e2622,#1b1613);
+    border:1px solid rgba(0,0,0,.6);
+    box-shadow:0 4px 12px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,225,180,.10);
+    display:flex;align-items:center;justify-content:center;
+  }
+  /* brass screw head */
+  .screw{
+    width:15px;height:15px;border-radius:50%;
+    background:radial-gradient(circle at 34% 28%, #f4e6b6, var(--brass) 55%, #6d5712 100%);
+    box-shadow:0 1px 3px rgba(0,0,0,.8), inset 0 -1px 2px rgba(0,0,0,.45);
+    position:relative;
+  }
+  /* the slot in the screw head */
+  .screw::after{
+    content:'';position:absolute;left:50%;top:50%;
+    width:11px;height:1.6px;margin:-.8px 0 0 -5.5px;
+    background:rgba(0,0,0,.55);border-radius:1px;
+    transform:rotate(38deg);
+  }
+
+  /* ---------- the swinging assembly ---------- */
+  /* Pivots about the screw above it, so the whole sign turns on one point. */
+  .swing{
+    transform-origin:50% 0;
+    animation:swing 4.6s cubic-bezier(.45,0,.55,1) infinite;
+    display:flex;flex-direction:column;align-items:center;
+    will-change:transform;
+    margin-top:-9px; /* tuck the rope apex under the screw head */
+  }
+  @keyframes swing{
+    0%,100%{ transform:rotate(-7.5deg) }
+    50%    { transform:rotate(7.5deg) }
+  }
+  .swing.nudge{ animation:swingBig 4.6s cubic-bezier(.45,0,.55,1) 2 }
+  @keyframes swingBig{
+    0%,100%{ transform:rotate(-13deg) }
+    50%    { transform:rotate(13deg) }
+  }
+
+  /* ---------- V rope from the single screw ---------- */
+  /* Both strands start at the same apex point and splay out to the board's
+     top corners. --v-angle is the splay from vertical; the strand length is
+     the hypotenuse, so the two ends land exactly on the board's top edge. */
+  .ropes{
+    --v-drop:clamp(60px,10vh,112px);
+    --v-angle:38deg;
+    --v-len:calc(var(--v-drop) / 0.788);   /* drop / cos(38deg) */
+    position:relative;
+    width:min(86vw,500px);
+    height:var(--v-drop);
+    flex:none;
+  }
+  .rope{
+    position:absolute;top:0;left:50%;
+    width:3px;height:var(--v-len);
+    margin-left:-1.5px;
+    transform-origin:50% 0;
+    background:linear-gradient(180deg,#cbb397,var(--rope) 40%,#8d7a63);
+    box-shadow:0 0 4px rgba(0,0,0,.55);
+    border-radius:2px;
+  }
+  .rope.l{transform:rotate(calc(var(--v-angle) * -1))}
+  .rope.r{transform:rotate(var(--v-angle))}
+  /* brass eyelet where each strand meets the board */
+  .rope::after{
+    content:'';position:absolute;bottom:-3px;left:50%;
+    width:10px;height:10px;margin-left:-5px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #f0e2b4, var(--brass) 55%, #6d5712);
+    box-shadow:0 1px 3px rgba(0,0,0,.75);
+  }
+  /* knot where both strands meet at the screw */
+  .knot{
+    position:absolute;top:-4px;left:50%;margin-left:-6px;
+    width:12px;height:12px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#cbb397,#8d7a63 70%,#6b5a48);
+    box-shadow:0 1px 3px rgba(0,0,0,.7);
+  }
+
+  /* ---------- the board ---------- */
+  .board{
+    position:relative;
+    width:min(86vw,500px);
+    /* Horizontal padding is capped lower than before: at wide viewports the
+       old 48px left the inner frame only ~17px wider than the headline. */
+    padding:clamp(26px,5.2vh,48px) clamp(18px,3.6vw,34px);
+    text-align:center;
+    border-radius:12px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.07), rgba(0,0,0,.16)),
+      repeating-linear-gradient(92deg,
+        var(--wood-1) 0px, var(--wood-2) 3px, var(--wood-1) 7px, var(--wood-3) 11px, var(--wood-1) 15px);
+    border:1px solid rgba(0,0,0,.5);
+    box-shadow:
+      inset 0 2px 0 rgba(255,225,180,.16),
+      inset 0 -3px 8px rgba(0,0,0,.5),
+      0 22px 44px rgba(0,0,0,.6);
+    /* hangs from its top edge, so it pivots there rather than at its middle */
+    transform-origin:50% 0;
+    animation:sway 4.6s cubic-bezier(.45,0,.55,1) infinite;
+    animation-delay:-.28s; /* trails the ropes slightly — reads as weight */
+    will-change:transform;
+  }
+  /* where the two beams land on the board */
+  .board::before{
+    content:'';position:absolute;inset:0;z-index:0;
+    border-radius:12px;pointer-events:none;
+    background:radial-gradient(ellipse at 50% -14%,
+      rgba(255,216,154,.24) 0%,
+      rgba(255,194,126,.09) 42%,
+      rgba(0,0,0,0) 74%);
+  }
+  @keyframes sway{
+    0%,100%{ transform:rotate(1.5deg) }
+    50%    { transform:rotate(-1.5deg) }
+  }
+
+  .inner{
+    position:relative;z-index:1;   /* above the board's lit highlight */
+    border:1px solid rgba(242,231,213,.22);
+    border-radius:6px;
+    padding:clamp(16px,3.4vh,28px) clamp(10px,2.4vw,18px);
+    /* nothing inside may push past this frame */
+    overflow-wrap:break-word;
+    min-width:0;
+  }
+
+  .kicker{
+    font-size:clamp(9px,1.6vw,11px);
+    letter-spacing:.34em;text-transform:uppercase;
+    /* letter-spacing also applies after the final character, which pushed the
+       centred text off-centre and widened it past the frame — pull it back */
+    margin-right:-.34em;
+    color:rgba(242,231,213,.62);
+    margin-bottom:clamp(10px,1.8vh,16px);
+    max-width:100%;
+    overflow-wrap:break-word;
+  }
+  .sign{
+    font-family:'DM Serif Display',Georgia,serif;
+    /* Capped at 3.05rem. DM Serif Display is a wide face; at the old 3.7rem
+       the headline was wider than the inner frame on desktop. */
+    font-size:clamp(1.85rem,6.2vw,3.05rem);
+    line-height:1.06;
+    color:var(--cream);
+    text-shadow:0 2px 0 rgba(0,0,0,.45), 0 0 22px rgba(255,200,120,.22);
+    max-width:100%;
+    overflow-wrap:break-word;
+    text-wrap:balance;
+  }
+  .rule{
+    width:44px;height:1px;margin:clamp(14px,2.2vh,20px) auto 0;
+    background:linear-gradient(90deg,transparent,var(--brass),transparent);
+  }
+  .tag{
+    margin-top:clamp(12px,2vh,18px);
+    font-size:clamp(11px,2vw,13px);
+    letter-spacing:.05em;
+    color:rgba(242,231,213,.68);
+  }
+
+  /* ---------- ground shadow ---------- */
+  .shadow{
+    margin-top:clamp(26px,5vh,58px);
+    width:min(64vw,330px);height:16px;border-radius:50%;
+    background:radial-gradient(ellipse,rgba(0,0,0,.55),rgba(0,0,0,0) 72%);
+    animation:shadowShift 4.6s cubic-bezier(.45,0,.55,1) infinite;
+    flex:none;
+  }
+  @keyframes shadowShift{
+    0%,100%{ transform:translateX(-28px) scaleX(.9); opacity:.5 }
+    50%    { transform:translateX(28px)  scaleX(.9); opacity:.5 }
+    25%,75%{ transform:translateX(0)     scaleX(1.06); opacity:.68 }
+  }
+
+  /* ---------- layout ---------- */
+  .top-pad{flex:0 0 auto}
+  .spacer{flex:1 1 auto;min-height:8px}
+
+  footer{
+    position:relative;z-index:3;
+    width:100%;padding:0 24px clamp(20px,4vh,34px);
+    display:flex;justify-content:center;gap:28px;flex-wrap:wrap;
+    font-size:12.5px;
+  }
+  footer a{
+    color:rgba(242,231,213,.55);text-decoration:none;
+    border-bottom:1px solid rgba(242,231,213,.16);padding-bottom:2px;
+    transition:color .3s,border-color .3s;
+  }
+  footer a:hover{color:var(--brass);border-color:var(--brass)}
+
+  @media (prefers-reduced-motion: reduce){
+    .swing,.board,.shadow{animation:none}
+    .swing{transform:rotate(0)}
+  }

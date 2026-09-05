@@ -2,17 +2,97 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Smooth scrolling for anchor navigation */
-html {
-	scroll-behavior: smooth;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* offset for the fixed nav when jumping to an anchor */
+    scroll-padding-top: 90px;
+  }
+
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+    overflow-x: hidden;
+  }
+
+  /* film grain */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 60;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  ::selection {
+    @apply bg-accent text-paper;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
-/* Respect user preference to reduce motion */
-@media (prefers-reduced-motion: reduce) {
-	* {
-		animation-duration: 0.001ms !important;
-		animation-iteration-count: 1 !important;
-		transition-duration: 0.001ms !important;
-		scroll-behavior: auto !important;
-	}
+@layer components {
+  .shell {
+    @apply mx-auto w-full max-w-shell px-6 md:px-10;
+  }
+
+  .display {
+    @apply font-display font-extrabold tracking-[-0.04em] leading-[0.94];
+  }
+
+  .sec-num {
+    @apply font-mono text-[12px] tracking-[0.1em] text-accent;
+  }
+
+  .sec-title {
+    @apply display text-[clamp(2.4rem,6vw,5.5rem)] mt-4;
+  }
+
+  .sec-note {
+    @apply max-w-[340px] text-[15px] leading-[1.65] text-muted;
+  }
+
+  .sec-head {
+    @apply flex flex-wrap items-end justify-between gap-10 border-b border-line pb-16 pt-32;
+  }
+
+  /* scroll reveal */
+  .rv {
+    @apply opacity-0 translate-y-11;
+    transition:
+      opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .rv.in {
+    @apply opacity-100 translate-y-0;
+  }
+
+  .btn {
+    @apply inline-flex items-center gap-3 rounded-full bg-ink px-8 py-[19px]
+           text-sm font-semibold text-paper no-underline
+           transition-[transform,background] duration-300 ease-smooth
+           hover:bg-accent;
+  }
+
+  .btn-ghost {
+    @apply border border-line bg-transparent text-ink hover:bg-ink hover:text-paper;
+  }
+
+  .pill {
+    @apply rounded-full border border-line px-[13px] py-[7px] font-mono text-[11px] text-muted;
+  }
+
+  .cursor-ring.is-big {
+    @apply -ml-[38px] -mt-[38px] h-[76px] w-[76px];
+  }
 }
