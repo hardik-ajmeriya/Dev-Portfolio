@@ -144,11 +144,17 @@ export default function Contact() {
       payload.append('Timeline', data.timeline);
       payload.append('Project overview', data.message);
 
-      // Cloudflare Turnstile — inactive until VITE_TURNSTILE_SITE_KEY is set.
-      // When you enable it, render the widget and pass its token here; the
-      // field name below is the one Web3Forms expects.
+      // Captcha token, if one is present. Inactive by default.
+      //
+      // NOTE: Cloudflare Turnstile and reCaptcha are Web3Forms PRO features.
+      // On the free plan the captcha option is hCaptcha, which posts its token
+      // as `h-captcha-response`. Both names are forwarded here so enabling
+      // either one is a front-end change only. See WEB3FORMS.md.
       const turnstileToken = window.turnstile?.getResponse?.();
       if (turnstileToken) payload.append('cf-turnstile-response', turnstileToken);
+
+      const hcaptchaToken = window.hcaptcha?.getResponse?.();
+      if (hcaptchaToken) payload.append('h-captcha-response', hcaptchaToken);
 
       const response = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
