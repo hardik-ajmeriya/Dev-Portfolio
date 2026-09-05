@@ -45,9 +45,22 @@
   ],
 
   "vars": {
-    // Only this address may read the admin panel, even if the Cloudflare
-    // Access policy is ever widened by mistake. Not a secret.
-    "ADMIN_EMAIL": "hardikpt95@gmail.com"
+    // Only this verified identity may read the admin panel, even if the
+    // Cloudflare Access policy is ever widened by mistake. Not a secret.
+    "ADMIN_EMAIL": "hardikpt95@gmail.com",
+
+    // Cloudflare Access JWT verification. Both MUST be set or the admin
+    // panel refuses every request — it fails closed by design.
+    //
+    // ACCESS_TEAM_DOMAIN: Zero Trust → Settings → Custom Pages, shown as
+    //   "<your-team>.cloudflareaccess.com"
+    // ACCESS_AUD: the Application Audience (AUD) tag, on the Access
+    //   application's Overview tab. It is what ties a token to THIS app —
+    //   without it, a token for any other app in your team would be accepted.
+    //
+    // See ADMIN.md. Neither is a secret; both are safe in git.
+    "ACCESS_TEAM_DOMAIN": "REPLACE_WITH_YOUR_TEAM.cloudflareaccess.com",
+    "ACCESS_AUD": "REPLACE_WITH_YOUR_ACCESS_AUD_TAG"
   },
 
   "observability": {

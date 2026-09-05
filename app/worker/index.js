@@ -150,7 +150,7 @@ export default {
     }
 
     if (url.pathname === '/admin' || url.pathname === '/admin/') {
-      const auth = requireAccess(request, env);
+      const auth = await requireAccess(request, env);
       if (!auth.ok) return auth.response;
       return new Response(adminPage(auth.email, auth.dev), {
         headers: {

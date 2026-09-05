@@ -9,22 +9,48 @@ Free: Cloudflare D1 for storage, Cloudflare Access for authentication.
 
 ## How the "only me" part works
 
-**Cloudflare Access sits in front of the Worker.** An unauthenticated request
-is stopped at Cloudflare's edge and never reaches your code — there is no login
-page of yours to attack, no session cookie to steal, no password to leak.
+Two layers, and the second is the one that actually guarantees it.
 
-Once Access has verified you, it injects a header
-(`Cf-Access-Authenticated-User-Email`) that cannot be forged from outside,
-because Access terminates the request first and strips any client-supplied copy.
+**1. Cloudflare Access at the edge.** An unauthenticated request is stopped
+before it reaches your code — no login page of yours to attack, no session
+cookie to steal, no password to leak.
 
-The Worker then checks that header against `ADMIN_EMAIL` in `wrangler.jsonc`.
-That is **defence in depth**: if the Access policy were ever deleted or widened
-by mistake, the panel would still refuse to serve data rather than quietly
-exposing every client's contact details.
+**2. The Worker verifies Access's signed token itself.** This is the part worth
+understanding.
 
-Writing this yourself would mean password hashing, session management, CSRF
-protection, brute-force limits and timing-safe comparison — five chances to get
-it subtly wrong, in the one place where wrong means leaking client data.
+Access sets a `Cf-Access-Authenticated-User-Email` header after it
+authenticates someone. It is tempting to just trust that header — but it is
+only trustworthy *while Access is correctly configured on that hostname*,
+because Access is what strips a client-supplied copy of it. If the policy were
+missing, deleted, or applied to a path that didn't cover the request, the
+header would be attacker-controlled and this would dump your entire client
+list:
+
+```bash
+curl -H "cf-access-authenticated-user-email: hardikpt95@gmail.com" \
+  https://hardikajmeriya.com/api/admin/enquiries
+```
+
+So the Worker ignores that header entirely. It reads the **signed JWT**
+(`Cf-Access-Jwt-Assertion`, or the `CF_Authorization` cookie) and verifies:
+
+- the RS256 signature, against Cloudflare's published keys for your team
+- `aud` matches **this** Access application — without it, a token minted for
+  any other app in your Cloudflare team would be accepted
+- `iss` is your team domain
+- `exp` has not passed
+- the algorithm is RS256, so an `alg: "none"` downgrade is refused
+- the verified email equals `ADMIN_EMAIL`
+
+A forged token fails the signature check regardless of what any dashboard
+setting says. **Security by cryptography rather than by configuration.**
+
+It **fails closed**: if `ACCESS_TEAM_DOMAIN` or `ACCESS_AUD` are missing, every
+admin request is denied. There is no fallback to the header.
+
+Writing auth yourself instead would mean password hashing, session management,
+CSRF protection, brute-force limits and timing-safe comparison — five chances
+to get it subtly wrong, in the one place where wrong means leaking client data.
 
 ---
 
@@ -77,17 +103,55 @@ Login method: Google, or the built-in one-time PIN, which emails you a code and
 needs no identity provider setup at all.
 
 > **Both applications matter.** Protecting only `/admin` leaves
-> `/api/admin/enquiries` reachable by anyone who guesses the URL. The Worker's
-> own `ADMIN_EMAIL` check would still block it, but you do not want that to be
-> the only thing standing between the internet and your client list.
+> `/api/admin/enquiries` reachable directly. The Worker's JWT check would still
+> refuse it, but you do not want that to be the only thing standing between the
+> internet and your client list.
 
-### 4. Deploy
+### 4. Copy the two Access values into wrangler.jsonc
+
+This is what makes the Worker able to verify tokens itself. Both are in
+`wrangler.jsonc` under `vars`, and both are currently placeholders:
+
+| Variable | Where to find it |
+| --- | --- |
+| `ACCESS_TEAM_DOMAIN` | Zero Trust → Settings → Custom Pages. Looks like `yourteam.cloudflareaccess.com` |
+| `ACCESS_AUD` | The Access application → Overview → **Application Audience (AUD) Tag** |
+
+Use the AUD tag from the **`/admin` application**. Neither value is a secret;
+both belong in git.
+
+**Until you set these, the admin panel denies every request** — including
+yours. That is deliberate: it fails closed rather than falling back to a
+forgeable header.
+
+### 5. Deploy
 
 ```bash
 npm run deploy
 ```
 
-Visit `hardikajmeriya.com/admin`, sign in, and you are in.
+### 6. Verify it is actually locked
+
+Do not skip this. Run it from a terminal, signed out:
+
+```powershell
+# 1. No credentials at all -> must be 401
+curl.exe -s -o NUL -w "%{http_code}`n" https://hardikajmeriya.com/api/admin/enquiries
+
+# 2. The forged header -> must ALSO be 401, not 200
+curl.exe -s -o NUL -w "%{http_code}`n" ^
+  -H "cf-access-authenticated-user-email: hardikpt95@gmail.com" ^
+  https://hardikajmeriya.com/api/admin/enquiries
+
+# 3. The panel itself -> 401 or an Access login redirect, never the page
+curl.exe -s -o NUL -w "%{http_code}`n" https://hardikajmeriya.com/admin
+```
+
+**If check 2 returns 200, stop and tell me.** That would mean the JWT
+verification is not running, and your client data is public.
+
+Then open `hardikajmeriya.com/admin` in a browser, sign in through Access, and
+confirm you can see the panel.
 
 ---
 

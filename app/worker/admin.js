@@ -10,6 +10,8 @@
  * refuse to serve data rather than silently exposing every client's details.
  */
 
+import { verifyAccessJwt, readAccessToken } from './access.js';
+
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), {
     status,
@@ -28,7 +30,7 @@ const VALID_STATUSES = ['new', 'replied', 'won', 'lost', 'archived'];
  * ADMIN_EMAIL narrows it further: even if someone else is added to the Access
  * policy by mistake, only this address can read the data.
  */
-export function requireAccess(request, env) {
+export async function requireAccess(request, env) {
   // ---- local development bypass ----------------------------------------
   // Cloudflare Access does not exist in `wrangler dev`, so without this the
   // panel is unreachable locally.
@@ -50,15 +52,32 @@ export function requireAccess(request, env) {
     return { ok: true, email: env.DEV_ADMIN_EMAIL, dev: true };
   }
 
-  const email = request.headers.get('cf-access-authenticated-user-email');
+  // ---- production: verify the SIGNED Access assertion -------------------
+  //
+  // Deliberately NOT the Cf-Access-Authenticated-User-Email header. That
+  // header is only trustworthy while Access is correctly configured in front
+  // of this hostname, because Access is what strips a client-supplied copy.
+  // If the policy were missing or removed, the header would be attacker-
+  // controlled and a one-line curl would dump every enquiry.
+  //
+  // The JWT is signed by Cloudflare, so a forged one fails verification
+  // regardless of dashboard state. Security by cryptography, not by config.
+  const token = readAccessToken(request);
+  const result = await verifyAccessJwt(token, env);
 
-  if (!email) {
+  if (!result.ok) {
+    // Logged, never returned — telling a caller *why* auth failed helps them
+    // probe. The visitor just gets 401.
+    console.warn('Admin auth rejected:', result.reason);
     return { ok: false, response: json({ error: 'Not authenticated.' }, 401) };
   }
-  if (env.ADMIN_EMAIL && email.toLowerCase() !== env.ADMIN_EMAIL.toLowerCase()) {
+
+  if (env.ADMIN_EMAIL && result.email.toLowerCase() !== env.ADMIN_EMAIL.toLowerCase()) {
+    console.warn('Admin auth rejected: verified identity is not ADMIN_EMAIL');
     return { ok: false, response: json({ error: 'Not authorised.' }, 403) };
   }
-  return { ok: true, email, dev: false };
+
+  return { ok: true, email: result.email, dev: false };
 }
 
 /** Store a submission. Never throws — a DB failure must not lose the email. */
@@ -224,7 +243,7 @@ async function exportCsv(env) {
 
 /** Router for everything under /api/admin/. */
 export async function handleAdminApi(request, env, url) {
-  const auth = requireAccess(request, env);
+  const auth = await requireAccess(request, env);
   if (!auth.ok) return auth.response;
 
   if (!env.DB) {
