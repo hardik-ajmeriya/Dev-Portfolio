@@ -10,7 +10,10 @@ export default function Footer() {
     <footer className="border-t border-line">
       <div className="shell">
         <div className="flex flex-wrap justify-between gap-5 py-11 text-[13px] text-muted">
-          <span>© {new Date().getFullYear()} Hardik — Full-stack development &amp; deployment</span>
+          <span>
+            © {new Date().getFullYear()} Hardik Ajmeriya — Full-stack development &amp; cloud
+            deployment
+          </span>
 
           <div className="flex gap-6">
             {socials.map((s) => (

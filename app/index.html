@@ -149,6 +149,96 @@
       href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
+    <!--
+      WebSite entity. `alternateName` helps search engines connect variations
+      of the name to this site.
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "url": "https://hardikajmeriya.com/",
+        "name": "Hardik Ajmeriya",
+        "alternateName": [
+          "Hardik Ajmeriya Portfolio",
+          "Hardik Ajmeriya — Full-Stack Developer"
+        ],
+        "inLanguage": "en",
+        "publisher": {
+          "@id": "https://hardikajmeriya.com/#hardik"
+        }
+      }
+    </script>
+
+    <!--
+      FAQPage. Generated from src/data/faq.js — if you edit the questions
+      there, regenerate this block. Google requires structured data to match
+      the visible page text, and mismatches can cost you the rich result.
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What kind of projects do you take on?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Web applications built on the MERN stack — React, Node.js, Express and MongoDB. Typically client portals, admin dashboards, storefronts, booking systems and internal business tools. I also take on the cloud side: deploying to AWS, setting up CI/CD pipelines, containerising with Docker and Kubernetes, and putting monitoring in place."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What makes you different from other freelance developers?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Most freelance developers hand over a repository and stop there, which leaves you to work out hosting, deployment and monitoring on your own. I do both halves — the application and the infrastructure it runs on. You get a deployed, monitored, running system rather than code you still need someone else to launch."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How do you price a project?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Fixed price, agreed before any work starts. After a free twenty-minute discovery call I send a written breakdown of scope, timeline and cost. If the scope changes later we agree the change first, so there are no surprise invoices. I do not bill hourly for defined projects."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How long does a project usually take?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "It depends entirely on scope, so I give a specific timeline in the written quote rather than a generic estimate. A focused MVP is usually a few weeks; a larger application with integrations and custom infrastructure takes longer. You will have a staging URL to click through throughout, so progress is visible rather than something you take on trust."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you take over a project someone else started?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Inheriting an existing codebase is common, whether the previous developer left, the project stalled, or it works locally but was never deployed. I will review what exists and tell you honestly whether it is better to continue with it or rebuild — including when continuing is the cheaper answer."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What happens after the project launches?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "The application goes live on production infrastructure with monitoring and alerting configured, so problems surface before your customers report them. I stay available afterwards for bug fixes, new features and infrastructure maintenance. You are not handed a system and left alone with it."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you work with clients remotely?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, entirely remotely, and with clients in any timezone. Communication is over email and scheduled calls, with regular written updates. I reply to enquiries within 48 hours."
+            }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

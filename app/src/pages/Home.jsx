@@ -6,6 +6,7 @@ import Services from '../components/sections/Services';
 import Tech from '../components/sections/Tech';
 import Process from '../components/sections/Process';
 import About from '../components/sections/About';
+import Faq from '../components/sections/Faq';
 import Contact from '../components/sections/Contact';
 
 /**
@@ -24,6 +25,7 @@ export default function Home() {
       <Tech />
       <Process />
       <About />
+      <Faq />
       <Contact />
     </>
   );

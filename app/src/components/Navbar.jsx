@@ -6,6 +6,7 @@ const links = [
   { href: '#tech', label: 'Tech' },
   { href: '#process', label: 'Process' },
   { href: '#about', label: 'About' },
+  { href: '#faq', label: 'FAQ' },
 ];
 
 export default function Navbar() {

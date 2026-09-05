@@ -131,7 +131,7 @@ export default function Contact() {
         <div className="grid grid-cols-1 gap-14 py-32 lg:grid-cols-[1fr_1fr] lg:gap-24">
           {/* Left: pitch */}
           <div className="rv">
-            <div className="sec-num">06 / CONTACT</div>
+            <div className="sec-num">07 / CONTACT</div>
             <h2 className="display mt-4 text-[clamp(2.8rem,7vw,6rem)]">
               Let&rsquo;s build
               <br />

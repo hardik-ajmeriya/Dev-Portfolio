@@ -50,9 +50,10 @@ export default function Hero() {
                       }`}
           style={{ transitionDelay: '450ms' }}
         >
-          <p className="max-w-[400px] text-[17px] leading-[1.6] text-muted">
-            Full-stack development on the MERN stack, deployed to AWS with CI/CD, containers and
-            monitoring. One person, from first commit to live URL.
+          <p className="max-w-[420px] text-[17px] leading-[1.6] text-muted">
+            I&rsquo;m <strong className="font-medium text-ink">Hardik Ajmeriya</strong>, a full-stack
+            developer. MERN applications built and deployed to AWS with CI/CD, containers and
+            monitoring — one person, from first commit to live URL.
           </p>
 
           <div className="flex flex-wrap gap-4">
