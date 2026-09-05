@@ -22,6 +22,12 @@
   # strictly better; this also removes the only request that sent a visitor's
   # IP address to Google before they had interacted with anything.
   #
+  # manifest-src is listed explicitly. default-src 'none' covers every
+  # directive that is not named, and that includes manifest-src — without
+  # this line the browser silently refuses to fetch site.webmanifest and the
+  # Android install prompt and home-screen icon never appear. It fails
+  # quietly, as a console warning rather than a broken page.
+  #
   # Note there is no email provider listed in connect-src. The contact form
   # posts same-origin to /api/enquiry, and the Worker talks to Resend from
   # the server — the browser never contacts an email API directly.
@@ -36,7 +42,7 @@
   #
   # script-src stays clean — no 'unsafe-inline', no 'unsafe-eval'. That is the
   # directive that actually matters for XSS; inline *styles* are far lower risk.
-  Content-Security-Policy: default-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://cloudflareinsights.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://cloudflareinsights.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
 
 # HTML must always revalidate so a deploy is picked up immediately.
 /
@@ -61,3 +67,27 @@
 # The 404 page must never be cached as though it were a real page.
 /404.html
   Cache-Control: no-store
+
+# Favicons live at fixed, unhashed paths, so they cannot be cached for a year
+# the way the fingerprinted /assets/* files are — a future rebrand would never
+# reach anyone who had already visited. A day is long enough to avoid
+# refetching on every page view and short enough that a change propagates.
+/favicon.ico
+  Cache-Control: public, max-age=86400
+/favicon-16x16.png
+  Cache-Control: public, max-age=86400
+/favicon-32x32.png
+  Cache-Control: public, max-age=86400
+/apple-touch-icon.png
+  Cache-Control: public, max-age=86400
+/android-chrome-192x192.png
+  Cache-Control: public, max-age=86400
+/android-chrome-512x512.png
+  Cache-Control: public, max-age=86400
+/maskable-icon-512x512.png
+  Cache-Control: public, max-age=86400
+
+# The manifest is tiny and changes rarely, but must not go stale for a year.
+/site.webmanifest
+  Content-Type: application/manifest+json; charset=utf-8
+  Cache-Control: public, max-age=86400

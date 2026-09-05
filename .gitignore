@@ -99,4 +99,8 @@ coverage/
 # Source PNG/JPGs kept for re-exporting. They live OUTSIDE app/public on
 # purpose — anything in public/ is copied verbatim into dist/ and deployed,
 # and these totalled ~29 MB of files that nothing on the site referenced.
+#
+# NOTE: branding/ is deliberately NOT in here. Brand masters are the one kind
+# of source asset that must survive a fresh clone — regenerating the favicon
+# set from the original artwork is impossible if the artwork is untracked.
 assets-original/
