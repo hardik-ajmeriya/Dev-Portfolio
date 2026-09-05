@@ -4,11 +4,16 @@ import { useCallback, useRef } from 'react';
  * A textarea with a Markdown formatting toolbar.
  *
  * Deliberately NOT a contenteditable WYSIWYG:
- *  - Web3Forms delivers the enquiry as a plain-text email, so HTML would
- *    arrive as raw tags or be stripped entirely. Markdown arrives readable.
- *  - contenteditable is the buggiest API in the browser across engines.
+ *  - contenteditable is the buggiest API in the browser across engines, and
+ *    accepting arbitrary user HTML then emailing it is an injection risk.
  *  - A real <textarea> keeps native validation, autofill, mobile keyboards,
  *    screen-reader behaviour and react-hook-form integration for free.
+ *  - Markdown is portable: the same text pastes cleanly into Notion, a doc
+ *    or a GitHub issue with its structure intact.
+ *
+ * Note the enquiry email is now sent through Resend from our own Worker, so
+ * we control the template and *could* render this Markdown as HTML in the
+ * email rather than showing it literally. See app/worker/emails.js.
  *
  * This is the same approach GitHub and Linear use for comment boxes.
  */

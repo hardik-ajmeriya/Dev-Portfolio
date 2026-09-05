@@ -5,22 +5,26 @@
  *
  *   POST /api/enquiry
  *     1. validates the submission server-side
- *     2. forwards it to Web3Forms  -> notification to Hardik
+ *     2. emails the enquiry to Hardik via Resend
  *     3. sends a branded auto-reply via Resend -> confirmation to the client
  *
- * Why a Worker rather than posting to Web3Forms straight from the browser:
+ * Both emails go through Resend. Web3Forms was tried first for step 2, but
+ * its free plan rejects server-to-server submissions outright ("Use our API
+ * in client side... Pro plan is required" for a server IP) — Workers don't
+ * even have a stable outbound IP to register for that. Resend has no such
+ * restriction, so one provider now handles both emails.
+ *
+ * Why a Worker rather than posting to Resend straight from the browser:
  *  - The Resend API key must never reach the client. Anything in the bundle
  *    is public, and a leaked key means spam sent from your own domain.
  *  - Client-side validation is a convenience, not a control — anyone can POST
  *    directly to an endpoint. This re-checks everything.
- *  - The Web3Forms access key moves out of the bundle as a side benefit.
  *
- * Secrets (set with `wrangler secret put NAME` — never committed):
- *   WEB3FORMS_ACCESS_KEY
+ * Secret (set with `wrangler secret put NAME` — never committed):
  *   RESEND_API_KEY
  */
 
-import { clientAutoReply, BRAND } from './emails.js';
+import { clientAutoReply, ownerNotification, BRAND } from './emails.js';
 
 const MAX_FIELD = 5000;
 
@@ -90,50 +94,8 @@ function validate(body) {
   return { errors, data };
 }
 
-/** Notification to Hardik, via Web3Forms. */
-async function notifyOwner(data, env) {
-  const summary = [data.name, data.company, data.projectType, data.budget, data.timeline]
-    .filter(Boolean)
-    .join('  ·  ');
-
-  const submittedAt = new Intl.DateTimeFormat('en-IN', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'Asia/Kolkata',
-  }).format(new Date());
-
-  const payload = {
-    access_key: env.WEB3FORMS_ACCESS_KEY,
-    subject: `New enquiry — ${data.name} · ${data.budget} · ${data.timeline}`,
-    from_name: 'hardikajmeriya.com',
-    replyto: data.email,
-    Summary: summary,
-    'Full name': data.name,
-    Email: data.email,
-    Company: data.company || '—',
-    'Project type': data.projectType,
-    'Estimated budget': data.budget,
-    Timeline: data.timeline,
-    'Project overview': data.message,
-    Submitted: `${submittedAt} IST`,
-  };
-
-  const res = await fetch('https://api.web3forms.com/submit', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', accept: 'application/json' },
-    body: JSON.stringify(payload),
-  });
-
-  const result = await res.json().catch(() => ({}));
-  return { ok: res.ok && result.success !== false, result };
-}
-
-/** Auto-reply to the client, via Resend. */
-async function sendAutoReply(data, env) {
-  if (!env.RESEND_API_KEY) return { ok: false, skipped: 'no RESEND_API_KEY' };
-
-  const { subject, html, text } = clientAutoReply(data);
-
+/** Shared Resend send — both the owner notification and the client auto-reply use it. */
+async function sendEmail({ to, replyTo, subject, html, text }, env) {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -142,8 +104,8 @@ async function sendAutoReply(data, env) {
     },
     body: JSON.stringify({
       from: `${BRAND.name} <hello@hardikajmeriya.com>`,
-      reply_to: BRAND.email,
-      to: [data.email],
+      reply_to: replyTo,
+      to: [to],
       subject,
       html,
       text,
@@ -154,6 +116,24 @@ async function sendAutoReply(data, env) {
     return { ok: false, status: res.status, detail: await res.text().catch(() => '') };
   }
   return { ok: true };
+}
+
+/** Notification to Hardik, via Resend. Reply-to is the enquirer's address. */
+async function notifyOwner(data, env) {
+  const submittedAt = new Intl.DateTimeFormat('en-IN', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZone: 'Asia/Kolkata',
+  }).format(new Date());
+
+  const { subject, html, text } = ownerNotification({ ...data, submittedAt: `${submittedAt} IST` });
+  return sendEmail({ to: BRAND.email, replyTo: data.email, subject, html, text }, env);
+}
+
+/** Auto-reply to the client, via Resend. Reply-to is Hardik's own address. */
+async function sendAutoReply(data, env) {
+  const { subject, html, text } = clientAutoReply(data);
+  return sendEmail({ to: data.email, replyTo: BRAND.email, subject, html, text }, env);
 }
 
 export default {
@@ -196,13 +176,13 @@ export default {
     // Missing secret is a deployment mistake, not a visitor's problem — say
     // so explicitly rather than letting it look like a generic upstream
     // failure. This is the most common cause of a broken form.
-    if (!env.WEB3FORMS_ACCESS_KEY) {
-      console.error('WEB3FORMS_ACCESS_KEY is not set — run `wrangler secret put`, or add it to .dev.vars for local dev');
+    if (!env.RESEND_API_KEY) {
+      console.error('RESEND_API_KEY is not set — run `wrangler secret put`, or add it to .dev.vars for local dev');
       return json(
         {
           success: false,
           message: 'The form is misconfigured. Please email me directly.',
-          code: 'missing_access_key',
+          code: 'missing_api_key',
         },
         503
       );
@@ -210,10 +190,10 @@ export default {
 
     const owner = await notifyOwner(data, env);
     if (!owner.ok) {
-      console.error('Web3Forms rejected the submission', JSON.stringify(owner.result));
+      console.error('Owner notification failed', owner.status, owner.detail);
       // 503, deliberately not 502: in local dev the Vite proxy itself returns
-      // 502 when the Worker is not running, and having both mean different
-      // things made the two indistinguishable in the browser console.
+      // 502 when the Worker is not running at all, so 503 here unambiguously
+      // means the Worker ran but the send itself failed.
       return json(
         {
           success: false,
@@ -224,11 +204,11 @@ export default {
       );
     }
 
-    // The auto-reply is a nicety. If Resend fails the enquiry still reached
+    // The auto-reply is a nicety. If it fails the enquiry still reached
     // Hardik, so the visitor must still be told it worked.
     const reply = await sendAutoReply(data, env);
-    if (!reply.ok && !reply.skipped) {
-      console.error('Resend auto-reply failed', reply.status, reply.detail);
+    if (!reply.ok) {
+      console.error('Client auto-reply failed', reply.status, reply.detail);
     }
 
     return json({ success: true });

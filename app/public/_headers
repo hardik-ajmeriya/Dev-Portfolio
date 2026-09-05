@@ -17,9 +17,9 @@
   #   cdn.jsdelivr.net               Devicon technology logos (Tech section)
   #   fonts.googleapis/gstatic       Bricolage Grotesque, Inter, JetBrains Mono
   #
-  # Note api.web3forms.com is deliberately NOT listed any more. The contact
-  # form now posts same-origin to /api/enquiry and the Worker talks to
-  # Web3Forms server-side, so the browser never contacts them directly.
+  # Note there is no email provider listed in connect-src. The contact form
+  # posts same-origin to /api/enquiry, and the Worker talks to Resend from
+  # the server — the browser never contacts an email API directly.
   #
   # 'unsafe-inline' appears for style-src ONLY, and it is genuinely required:
   # the site sets inline style attributes at runtime in several places —

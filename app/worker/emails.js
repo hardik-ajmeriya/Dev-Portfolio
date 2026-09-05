@@ -148,4 +148,89 @@ export function clientAutoReply({ name, projectType, budget, timeline, message }
   };
 }
 
+/**
+ * Notification sent to Hardik when someone submits the form.
+ * The caller sets `reply_to` to the visitor's address, so hitting Reply in
+ * the mail client goes straight back to them — this body doesn't need to
+ * repeat their email for that to work, but it's included for scanability.
+ */
+export function ownerNotification({ name, email, company, projectType, budget, timeline, message, submittedAt }) {
+  const summaryRows = [
+    ['Email', email],
+    ['Company', company],
+    ['Project type', projectType],
+    ['Budget', budget],
+    ['Timeline', timeline],
+    ['Submitted', submittedAt],
+  ].filter(([, v]) => v);
+
+  const html = `<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:${BRAND.paper};">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND.paper};padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+             style="max-width:560px;background:#ffffff;border:1px solid ${BRAND.line};border-radius:14px;">
+        <tr><td style="padding:36px 36px 8px;">
+          <p style="margin:0 0 22px;font:600 13px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:${BRAND.muted};">
+            New project enquiry
+          </p>
+          <h1 style="margin:0 0 18px;font:700 26px/1.25 Georgia,'Times New Roman',serif;color:${BRAND.ink};">
+            ${esc(name)}
+          </h1>
+        </td></tr>
+
+        <tr><td style="padding:0 36px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                 style="border:1px solid ${BRAND.line};border-radius:10px;background:${BRAND.paper};">
+            <tr><td style="padding:18px 20px 6px;">
+              ${summaryRows
+                .map(
+                  ([label, value]) => `
+              <p style="margin:0 0 10px;font:400 14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:${BRAND.ink};">
+                <span style="color:${BRAND.muted};">${esc(label)}:</span> ${esc(value)}
+              </p>`
+                )
+                .join('')}
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <tr><td style="padding:22px 36px 30px;">
+          <p style="margin:0 0 8px;font:600 11px/1 -apple-system,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:${BRAND.muted};">
+            Project overview
+          </p>
+          <p style="margin:0;padding:0 0 0 14px;border-left:2px solid ${BRAND.line};
+                    font:400 14px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+                    color:${BRAND.ink};white-space:pre-wrap;">${esc(message)}</p>
+        </td></tr>
+      </table>
+
+      <p style="margin:20px 0 0;font:400 12px/1.5 -apple-system,sans-serif;color:${BRAND.muted};">
+        Reply to this email to respond directly to ${esc((name || '').trim().split(/\s+/)[0] || 'them')}.
+      </p>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  const text = [
+    `New project enquiry — ${name}`,
+    '',
+    ...summaryRows.map(([l, v]) => `${l}: ${v}`),
+    '',
+    'Project overview:',
+    message,
+    '',
+    'Reply to this email to respond directly to the enquirer.',
+  ].join('\n');
+
+  return {
+    subject: `New enquiry — ${name}${budget ? ` · ${budget}` : ''}${timeline ? ` · ${timeline}` : ''}`,
+    html,
+    text,
+  };
+}
+
 export { BRAND };

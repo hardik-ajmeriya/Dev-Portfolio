@@ -6,9 +6,15 @@ Worker on your own domain — no monthly cost.
 
 ```
 Browser  ──POST /api/enquiry──▶  Worker (app/worker/index.js)
-                                    ├─▶ Web3Forms  → notification to you
-                                    └─▶ Resend     → thank-you to the client
+                                    ├─▶ Resend  → notification to you
+                                    └─▶ Resend  → thank-you to the client
 ```
+
+Both legs go through Resend. An earlier version sent the notification via
+Web3Forms, but Web3Forms's free plan rejects server-to-server submissions
+outright — it only accepts a form posted directly from a visitor's browser,
+which defeats the point of hiding the key in a Worker. Resend has no such
+restriction, so one provider now handles both emails.
 
 ---
 
@@ -21,7 +27,6 @@ Three reasons, in order of importance:
    damages your sending reputation and is painful to recover from.
 2. **Client-side validation is a convenience, not a control.** Anyone can POST
    directly to an endpoint with curl. The Worker re-validates everything.
-3. **The Web3Forms access key leaves the bundle too**, as a side benefit.
 
 ---
 
@@ -49,11 +54,10 @@ this key lives on a server that only ever sends mail.
 
 ```bash
 cd app
-npx wrangler secret put WEB3FORMS_ACCESS_KEY   # paste your existing key
-npx wrangler secret put RESEND_API_KEY         # paste the Resend key
+npx wrangler secret put RESEND_API_KEY   # paste the Resend key
 ```
 
-Or `npm run secrets` to be prompted for both.
+Or `npm run secrets` to be prompted for it.
 
 These are stored encrypted by Cloudflare. They are **not** in `wrangler.jsonc`,
 not in `.env`, and not in git.
@@ -63,7 +67,6 @@ not in `.env`, and not in git.
 Create `app/.dev.vars` (gitignored):
 
 ```
-WEB3FORMS_ACCESS_KEY=your-web3forms-key
 RESEND_API_KEY=your-resend-key
 ```
 
@@ -129,12 +132,12 @@ If you change the promised response time, change it in `emails.js`,
 | --- | --- |
 | Validation fails | 422, form shows an error, nothing sent |
 | Honeypot tripped | 200 returned, **nothing sent** — the bot learns nothing |
-| Web3Forms down | 502, visitor told to email you directly |
-| Resend down | **Still reports success.** The enquiry reached you; the auto-reply is a nicety. Failure is logged, not surfaced |
-| `RESEND_API_KEY` missing | Auto-reply skipped silently, enquiry still delivered |
+| Owner notification fails (Resend rejects it) | 503, visitor told to email you directly |
+| Client auto-reply fails (Resend rejects it) | **Still reports success.** The enquiry reached you; the auto-reply is a nicety. Failure is logged, not surfaced |
+| `RESEND_API_KEY` missing entirely | 503 with an explicit "form is misconfigured" message — the most common deploy mistake |
 
-That third row is the important design decision: a visitor must never be told
-their message failed when it actually reached you.
+That second-from-last row is the important design decision: a visitor must
+never be told their message failed when it actually reached you.
 
 ---
 

@@ -29,8 +29,7 @@
     "enabled": true
   }
 
-  // Secrets are NOT stored here. Set them once with:
-  //   npx wrangler secret put WEB3FORMS_ACCESS_KEY
+  // The secret is NOT stored here. Set it once with:
   //   npx wrangler secret put RESEND_API_KEY
-  // For local dev, put them in app/.dev.vars (gitignored).
+  // For local dev, put it in app/.dev.vars (gitignored).
 }

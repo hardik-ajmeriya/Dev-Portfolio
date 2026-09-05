@@ -129,10 +129,10 @@ export default function Contact() {
     setSubmitting(true);
 
     try {
-      // Posts to our own Worker (app/worker/index.js), not to Web3Forms
-      // directly. The Worker re-validates server-side, forwards the
-      // notification, and sends the client auto-reply — which keeps both the
-      // Resend and Web3Forms keys out of this bundle entirely.
+      // Posts to our own Worker (app/worker/index.js), which re-validates
+      // server-side and sends both emails via Resend — the notification to
+      // Hardik and the auto-reply to the visitor. Keeps the Resend key out
+      // of this bundle entirely, which is the whole point.
       const response = await fetch('/api/enquiry', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },

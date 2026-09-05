@@ -1,0 +1,13 @@
+# Local-dev secret for the Worker (app/worker/index.js), read by
+# `wrangler dev` (npm run dev:api) — separate from app/.env, which only
+# feeds Vite/the client bundle and never reaches the Worker.
+#
+# Copy this file to `.dev.vars` in this same directory and fill in a real
+# value. Never commit `.dev.vars` itself (it's gitignored already).
+#
+# In production this is set with `npm run secrets` (wrangler secret put),
+# not with this file.
+
+# Required — both the owner notification and the client auto-reply send
+# through this one Resend key. Get one at https://resend.com
+RESEND_API_KEY=

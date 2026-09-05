@@ -107,27 +107,34 @@ The contact form is the only thing on the site that *does* something, so it is
 the only thing that can be abused. Someone can script requests to it and fill
 your inbox.
 
-Three defences are implemented in `app/src/components/sections/Contact.jsx`:
+Defences are implemented in two layers: client-side in
+`app/src/components/sections/Contact.jsx` for fast feedback, and re-checked
+server-side in the Worker (`app/worker/index.js`), which is the layer that
+actually matters — anyone can bypass the browser and POST straight to
+`/api/enquiry` with curl.
 
 1. **Honeypot** — a `botcheck` field positioned off-screen and hidden from
-   screen readers. Bots that fill every input trip it and the submission is
-   silently discarded. Web3Forms also rejects it server-side.
+   screen readers. Bots that fill every input trip it; the Worker accepts the
+   request (so the bot gets no signal) and sends nothing.
 2. **Minimum fill time** — submissions faster than 3 seconds after page load
-   are rejected. No human reads and completes the form that fast.
+   are rejected client-side. No human reads and completes the form that fast.
 3. **Cooldown** — 45 seconds enforced between submissions from the same
-   browser.
+   browser, client-side.
+4. **Server-side validation** — the Worker re-validates every field
+   independently of the browser (`worker/index.js`'s `validate()`), so a
+   forged request that skips the client entirely still can't send garbage.
+5. **Same-origin check** — the Worker rejects requests whose `Origin` header
+   isn't the site itself, which stops the endpoint being driven from another
+   website in a real browser (not a control against a direct curl/script POST,
+   since `Origin` can be forged by a non-browser client).
 
-These stop unsophisticated bots, which is the overwhelming majority. They are
-client-side, so a determined attacker can bypass them by posting directly to
-the Web3Forms endpoint.
+These stop unsophisticated bots and casual abuse, which is the overwhelming
+majority. **If you ever get real spam that gets past all of this, add
+Cloudflare Turnstile verification in the Worker** — you control the server
+side, so this is a straightforward addition (see `AUTOREPLY.md`).
 
-**If you ever get real spam, turn on hCaptcha in the Web3Forms dashboard.**
-That is a server-side check and is the actual fix. It costs a little friction
-for genuine visitors, so it is not worth enabling pre-emptively.
-
-Note the Web3Forms access key is public by design — it is visible in the page
-source and cannot be hidden in a static site. That is expected. It only allows
-sending to *your* form; it grants nothing else.
+The Resend API key never reaches the browser — it's a Worker secret, not a
+build-time env var, so it isn't visible in the page source.
 
 ---
 

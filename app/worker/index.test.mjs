@@ -3,11 +3,10 @@ const mod = (await import('./index.js')).default;
 const calls = [];
 globalThis.fetch = async (url, opts) => {
   calls.push({ url: String(url), body: opts?.body });
-  if (String(url).includes('web3forms')) return { ok:true, json:async()=>({success:true}) };
-  if (String(url).includes('resend'))    return { ok:true, text:async()=>'' };
+  if (String(url).includes('resend')) return { ok:true, text:async()=>'' };
   return { ok:false, json:async()=>({}), text:async()=>'' };
 };
-const env = { WEB3FORMS_ACCESS_KEY:'key-123', RESEND_API_KEY:'re_123',
+const env = { RESEND_API_KEY:'re_123',
   ASSETS:{ fetch:async()=>new Response('static',{status:200}) } };
 
 const post = (body, origin='https://hardikajmeriya.com') => new Request(
@@ -66,49 +65,47 @@ await t('valid submission -> 200', async()=>{
   const r = await mod.fetch(post(valid), env);
   const j = await r.json(); eq(r.status,200,'status'); eq(j.success,true,'success');
 });
-await t('called Web3Forms AND Resend', async()=>{
+await t('called Resend twice (owner, then client)', async()=>{
   eq(calls.length,2,'call count');
-  if(!calls[0].url.includes('web3forms')) throw new Error('web3forms not first');
-  if(!calls[1].url.includes('resend')) throw new Error('resend not second');
+  if(!calls[0].url.includes('resend')) throw new Error('owner send not first');
+  if(!calls[1].url.includes('resend')) throw new Error('client send not second');
 });
-await t('Web3Forms payload has all fields + key', async()=>{
+await t('owner email sent to Hardik, reply-to the enquirer', async()=>{
   const b=JSON.parse(calls[0].body);
-  eq(b.access_key,'key-123','access_key');
-  eq(b.replyto,'priya@northwind.example','replyto');
-  for(const k of ['Summary','Full name','Email','Company','Project type','Estimated budget','Timeline','Project overview','Submitted'])
-    if(!b[k]) throw new Error('missing '+k);
+  eq(b.to[0],'hardik.ajmeriya89@gmail.com','to');
+  eq(b.reply_to,'priya@northwind.example','reply_to');
+  if(!b.html.includes('Priya Sharma')) throw new Error('name missing from body');
+  for(const field of [valid.email, valid.company, valid.projectType, valid.budget, valid.timeline])
+    if(!b.html.includes(field)) throw new Error('missing field: '+field);
 });
-await t('Resend sends to the client, not to Hardik', async()=>{
+await t('client auto-reply sent to the enquirer, reply-to Hardik', async()=>{
   const b=JSON.parse(calls[1].body);
   eq(b.to[0],'priya@northwind.example','to');
+  eq(b.reply_to,'hardik.ajmeriya89@gmail.com','reply_to');
   if(!b.html || !b.text) throw new Error('missing html/text part');
 });
 
 console.log();
 console.log('=== RESILIENCE ===');
-await t('Resend failure still reports success (enquiry did arrive)', async()=>{
-  globalThis.fetch = async(u)=> String(u).includes('web3forms')
-    ? {ok:true,json:async()=>({success:true})}
-    : {ok:false,status:500,text:async()=>'boom'};
+await t('client auto-reply failure still reports success (owner already notified)', async()=>{
+  let n = 0;
+  globalThis.fetch = async()=> { n++; return n === 1
+    ? { ok:true, text:async()=>'' }
+    : { ok:false, status:500, text:async()=>'boom' }; };
   const r = await mod.fetch(post(valid), env);
   const j = await r.json(); eq(j.success,true,'success');
 });
-await t('Web3Forms failure -> 503 (distinct from proxy 502)', async()=>{
-  globalThis.fetch = async()=>({ok:false,json:async()=>({success:false}),text:async()=>''});
+await t('owner notification failure -> 503 (distinct from proxy 502)', async()=>{
+  globalThis.fetch = async()=>({ok:false,status:500,text:async()=>'boom'});
   const r = await mod.fetch(post(valid), env);
-  eq(r.status,503,'status');
+  const j = await r.json(); eq(r.status,503,'status'); eq(j.code,'upstream_failed','code');
 });
-await t('missing WEB3FORMS_ACCESS_KEY -> 503 with a clear code', async()=>{
-  globalThis.fetch = async()=>({ok:true,json:async()=>({success:true}),text:async()=>''});
-  const r = await mod.fetch(post(valid), {...env, WEB3FORMS_ACCESS_KEY:undefined});
+await t('missing RESEND_API_KEY -> 503 with a clear code', async()=>{
+  globalThis.fetch = async()=>({ok:true,text:async()=>''});
+  const r = await mod.fetch(post(valid), {...env, RESEND_API_KEY:undefined});
   const j = await r.json();
   eq(r.status,503,'status');
-  eq(j.code,'missing_access_key','code');
-});
-await t('missing RESEND_API_KEY does not break submission', async()=>{
-  globalThis.fetch = async()=>({ok:true,json:async()=>({success:true}),text:async()=>''});
-  const r = await mod.fetch(post(valid), {...env, RESEND_API_KEY:undefined});
-  const j = await r.json(); eq(j.success,true,'success');
+  eq(j.code,'missing_api_key','code');
 });
 
 console.log();
