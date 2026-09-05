@@ -20,9 +20,16 @@
     // Unknown paths serve index.html so client-side anchors keep working.
     "not_found_handling": "single-page-application",
 
-    // Send every request through the Worker first, so /api/enquiry is
-    // reachable. Without this, asset serving would shadow the API route.
-    "run_worker_first": ["/api/*"]
+    // Routes that must reach the Worker BEFORE the static asset layer.
+    //
+    // Without a path listed here, Cloudflare tries to serve a matching file,
+    // finds none, and — because not_found_handling is single-page-application
+    // — returns dist/index.html instead. The Worker never runs.
+    //
+    // That is exactly what happened when /admin was missing from this list:
+    // visiting /admin served the prerendered portfolio page rather than the
+    // admin panel, in local dev and would have in production too.
+    "run_worker_first": ["/api/*", "/admin", "/admin/*"]
   },
 
   // Enquiries are stored here so the /admin panel has something to show.

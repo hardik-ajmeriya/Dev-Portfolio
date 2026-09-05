@@ -178,5 +178,19 @@ await t('production panel has NO dev banner', async()=>{
 });
 
 console.log();
+console.log('=== ROUTING CONFIG (a code-correct Worker is useless if unrouted) ===');
+await t('wrangler.jsonc routes /admin through the Worker first', async()=>{
+  const fs = await import('node:fs');
+  const raw = fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
+  // strip // comments so JSON.parse can read the jsonc file
+  const cfg = JSON.parse(raw.replace(/^\s*\/\/.*$/gm, ''));
+  const first = cfg.assets?.run_worker_first || [];
+  if (!first.includes('/admin'))
+    throw new Error("'/admin' missing from run_worker_first — the asset layer would serve index.html instead of the panel. Got: " + JSON.stringify(first));
+  if (!first.some(p => p.startsWith('/api')))
+    throw new Error("'/api/*' missing from run_worker_first — the enquiry endpoint would be shadowed");
+});
+
+console.log();
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail?1:0);
