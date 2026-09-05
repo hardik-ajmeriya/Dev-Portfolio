@@ -4,7 +4,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useRevealGroup } from '../../hooks/useReveal';
 import Magnetic from '../Magnetic';
-import { Field, TextInput, TextArea, Select, SubmitButton } from '../form/FormControls';
+import { Field, TextInput, Select, SubmitButton } from '../form/FormControls';
+import RichTextArea from '../form/RichTextArea';
 import { PROJECT_TYPES, BUDGET_RANGES, TIMELINES } from '../../data/contactOptions';
 
 export const CONTACT_EMAIL = 'hardik.ajmeriya89@gmail.com';
@@ -94,7 +95,13 @@ export default function Contact() {
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
+    setValue,
   } = useForm({ resolver: yupResolver(schema), mode: 'onBlur' });
+
+  // Watched so the toolbar and character counter re-render as the
+  // Project Overview changes, including edits the toolbar makes itself.
+  const messageValue = watch('message');
 
   const onSubmit = async (data) => {
     setFormError(null);
@@ -325,18 +332,20 @@ export default function Contact() {
                     </Field>
                   </div>
 
-                  <Field
-                    id="message"
-                    label="Project overview"
-                    hint="min. 30 characters"
-                    error={errors.message?.message}
-                  >
+                  <Field id="message" label="Project overview" error={errors.message?.message}>
                     {(a11y) => (
-                      <TextArea
-                        {...register('message')}
-                        {...a11y}
-                        rows={6}
+                      <RichTextArea
+                        id="message"
+                        registration={register('message')}
+                        getValue={() => messageValue}
+                        setValue={(next) =>
+                          setValue('message', next, { shouldValidate: true, shouldDirty: true })
+                        }
                         invalid={!!errors.message}
+                        minLength={30}
+                        rows={7}
+                        aria-invalid={a11y['aria-invalid']}
+                        aria-describedby={a11y['aria-describedby']}
                         placeholder="Describe your project, goals, target users, desired features, preferred technologies (if any), and expected timeline."
                       />
                     )}
