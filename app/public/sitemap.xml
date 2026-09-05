@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Single-page site, so this is deliberately minimal. The section anchors are
+  not listed as separate URLs — they are the same document and listing them
+  would be duplicate content.
+
+  Update <lastmod> when you make a substantial content change.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://hardikajmeriya.com/</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
