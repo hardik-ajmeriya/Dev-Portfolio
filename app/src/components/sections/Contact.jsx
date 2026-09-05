@@ -161,7 +161,10 @@ export default function Contact() {
       // scannable facts are not pushed below it.
       payload.append('Summary', summary);
       payload.append('Full name', data.name);
-      payload.append('Business email', data.email);
+      // Must be named exactly `email` or `Email`: Web3Forms' autoresponder
+      // looks for that field to decide where to send the auto-reply. Named
+      // 'Business email' it would silently never fire.
+      payload.append('Email', data.email);
       payload.append('Company', company || '—');
       payload.append('Project type', data.projectType);
       payload.append('Estimated budget', data.budget);
