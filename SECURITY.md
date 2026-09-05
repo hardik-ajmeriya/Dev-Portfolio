@@ -22,11 +22,12 @@ say so:
 | Personal data breach | **Applies** — client names, emails and briefs are now stored. This is the change that raised the stakes |
 | File upload abuse | No — nothing accepts uploads |
 | Origin IP discovery → direct attack | No — there is no origin to find |
-| DDoS / request flood | Absorbed by Cloudflare (see below) |
+| DDoS / request flood | Absorbed by Cloudflare (§1, §2b) |
+| Email relay abuse via the auto-reply | **Applies** — the auto-reply goes to a visitor-supplied address. Mitigated by the per-recipient rate limit (§2a) |
 | XSS | Mitigated by CSP. The admin panel escapes every value it renders |
 | CSV formula injection | **Applies** to the admin export — mitigated by prefixing cells starting `= + - @` |
 | Clickjacking | Blocked by `X-Frame-Options` / `frame-ancestors` |
-| Contact form spam | **Real risk** — mitigated, see below |
+| Contact form spam | **Real risk** — mitigated: honeypot, server-side validation, and per-IP / per-recipient / site-wide rate limits in the Worker (§2a) |
 | Cloudflare account takeover | **The biggest real risk** — see below, and it now guards a client database, not just a website |
 
 > **This section previously claimed there was no database and no backend.** That
@@ -57,7 +58,61 @@ The rate limiting rule below is what addresses it.
 
 ---
 
-## 2. Rate limiting (configure this)
+## 2. Rate limiting
+
+Two layers, and they defend different things.
+
+### 2a. In the Worker — already implemented
+
+`app/worker/rateLimit.js`, backed by the `rate_limits` table (migration
+`0002`). This is the layer that protects the **contact form specifically**,
+and it exists because the cooldown in `Contact.jsx` runs in the visitor's
+browser: it stops a double-click and nothing else.
+
+| Bucket | Limit | What it stops |
+| --- | --- | --- |
+| Per IP | 5/hour, 15/day | One machine scripting the form |
+| **Per recipient address** | **3/hour, 6/day** | **Using this domain as an open relay** |
+| Site-wide | 40/day | A distributed flood exhausting the email quota |
+
+The per-recipient bucket is the one worth understanding. The auto-reply is
+sent to whatever address the *submitter* typed. Without a cap on that, anyone
+can make `hardikajmeriya.com` send repeated mail to a person who never asked
+for it — and the damage lands on your sending reputation, not theirs.
+
+The site-wide cap is arithmetic, not a guess: Resend's free plan allows 100
+emails a day and each submission sends two, so 40 submissions = 80 emails,
+leaving headroom. There is a test asserting this stays true if the number is
+ever changed.
+
+It **fails open**. If D1 is unavailable the submission still goes through.
+That is the opposite of `worker/access.js`, which fails closed — and the
+difference is deliberate: losing a real enquiry is worse than admitting some
+spam, whereas exposing client data is worse than locking yourself out.
+
+Apply the migration before the first deploy:
+
+```bash
+cd app
+npx wrangler d1 migrations apply hardik-enquiries --remote
+```
+
+Optionally set a salt so the stored hashes are unique to your deployment:
+
+```bash
+npx wrangler secret put RATE_LIMIT_SALT
+```
+
+No raw IP or email address is ever written to the table — only a salted
+SHA-256. The limiter only needs to know whether two requests came from the
+same place, so storing the value itself would be collecting personal data for
+no reason.
+
+### 2b. At the edge — configure this
+
+The Worker limiter does not help with a flood aimed at the *site* rather than
+the form, because that traffic never reaches the enquiry endpoint. That is
+what the WAF rule is for.
 
 The free plan includes **one** rate limiting rule. Expressions on the free plan
 can only match on **Path** and **Verified Bot**, so keep it simple.

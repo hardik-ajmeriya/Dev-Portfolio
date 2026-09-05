@@ -161,9 +161,22 @@ real mailbox — Resend sends *from* it, and `reply_to` is set to your Gmail, so
 replies reach you. If you later set up Cloudflare Email Routing you can receive
 at that address too.
 
-**Free tier limits:** 3,000/month, 100/day. Each submission sends one
-auto-reply, so you would need 100 enquiries in a day to hit it.
+**Free tier limits:** 3,000/month, 100/day. Each submission sends **two**
+emails — the notification to you and the auto-reply to the client — so the
+real ceiling is **50 submissions a day**, not 100. The Worker's global rate
+limit is set to 40/day to stay inside it with headroom (see SECURITY.md).
 
 **Turnstile is now viable.** It was ruled out earlier because Web3Forms gates it
 behind Pro — but you now control the server side, so you can verify a Turnstile
-token in the Worker yourself, for free. Worth doing only if real spam appears.
+token in the Worker yourself, for free. Worth doing only if real spam appears;
+the rate limiter below is the cheaper first line.
+
+**Rate limiting is enforced in the Worker**, not the browser. `worker/rateLimit.js`
+caps submissions per IP, per recipient address and site-wide. The per-recipient
+cap is the one that matters most: the auto-reply goes to whatever address the
+submitter types, so without it this endpoint would let anyone make your domain
+send repeated mail to a stranger. Apply the migration before deploying:
+
+```bash
+npx wrangler d1 migrations apply hardik-enquiries --remote
+```
