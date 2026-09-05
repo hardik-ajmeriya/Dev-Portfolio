@@ -93,10 +93,17 @@ await t('Resend failure still reports success (enquiry did arrive)', async()=>{
   const r = await mod.fetch(post(valid), env);
   const j = await r.json(); eq(j.success,true,'success');
 });
-await t('Web3Forms failure -> 502', async()=>{
+await t('Web3Forms failure -> 503 (distinct from proxy 502)', async()=>{
   globalThis.fetch = async()=>({ok:false,json:async()=>({success:false}),text:async()=>''});
   const r = await mod.fetch(post(valid), env);
-  eq(r.status,502,'status');
+  eq(r.status,503,'status');
+});
+await t('missing WEB3FORMS_ACCESS_KEY -> 503 with a clear code', async()=>{
+  globalThis.fetch = async()=>({ok:true,json:async()=>({success:true}),text:async()=>''});
+  const r = await mod.fetch(post(valid), {...env, WEB3FORMS_ACCESS_KEY:undefined});
+  const j = await r.json();
+  eq(r.status,503,'status');
+  eq(j.code,'missing_access_key','code');
 });
 await t('missing RESEND_API_KEY does not break submission', async()=>{
   globalThis.fetch = async()=>({ok:true,json:async()=>({success:true}),text:async()=>''});

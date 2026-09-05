@@ -193,11 +193,34 @@ export default {
       return json({ success: false, message: 'Please check the form and try again.', errors }, 422);
     }
 
+    // Missing secret is a deployment mistake, not a visitor's problem — say
+    // so explicitly rather than letting it look like a generic upstream
+    // failure. This is the most common cause of a broken form.
+    if (!env.WEB3FORMS_ACCESS_KEY) {
+      console.error('WEB3FORMS_ACCESS_KEY is not set — run `wrangler secret put`, or add it to .dev.vars for local dev');
+      return json(
+        {
+          success: false,
+          message: 'The form is misconfigured. Please email me directly.',
+          code: 'missing_access_key',
+        },
+        503
+      );
+    }
+
     const owner = await notifyOwner(data, env);
     if (!owner.ok) {
+      console.error('Web3Forms rejected the submission', JSON.stringify(owner.result));
+      // 503, deliberately not 502: in local dev the Vite proxy itself returns
+      // 502 when the Worker is not running, and having both mean different
+      // things made the two indistinguishable in the browser console.
       return json(
-        { success: false, message: 'Could not send your message. Please email me directly.' },
-        502
+        {
+          success: false,
+          message: 'Could not send your message. Please email me directly.',
+          code: 'upstream_failed',
+        },
+        503
       );
     }
 

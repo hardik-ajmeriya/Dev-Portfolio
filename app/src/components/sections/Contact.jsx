@@ -147,14 +147,26 @@ export default function Contact() {
           botcheck: data.botcheck || '',
         }),
       });
-      const json = await response.json();
+      // A 502 here is the Vite dev proxy failing to reach the Worker, not a
+      // response from it — the body is HTML, so parsing it as JSON would
+      // throw and surface as a confusing "network error".
+      if (response.status === 502) {
+        setFormError(
+          import.meta.env.DEV
+            ? 'Dev: the API Worker is not running. Start it with `npm run dev:api` in a second terminal.'
+            : `Could not reach the server. Please email me directly at ${CONTACT_EMAIL}.`
+        );
+        return;
+      }
 
-      if (json.success) {
+      const json = await response.json().catch(() => null);
+
+      if (json?.success) {
         lastSentAt.current = Date.now();
         setSucceeded(true);
         reset();
       } else {
-        setFormError(json.message || 'Something went wrong. Please try again.');
+        setFormError(json?.message || 'Something went wrong. Please try again.');
       }
     } catch {
       setFormError(`Network error. You can also email me directly at ${CONTACT_EMAIL}.`);
