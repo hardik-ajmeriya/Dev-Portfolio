@@ -1,3 +1,5 @@
+import { forwardRef } from 'react';
+
 /**
  * Shared form primitives.
  *
@@ -66,25 +68,46 @@ export function Field({ id, label, hint, error, optional, children }) {
   );
 }
 
-export function TextInput({ invalid, className = '', ...props }) {
-  return <input {...props} className={`${controlBase} ${stateClasses(invalid)} ${className}`} />;
-}
-
-export function TextArea({ invalid, className = '', ...props }) {
+/**
+ * All three controls are wrapped in forwardRef.
+ *
+ * This is REQUIRED, not stylistic: react-hook-form's register() returns a
+ * `ref`, and spreading that onto a plain function component silently drops it.
+ * The ref never reaches the DOM node, so RHF reads an empty value and every
+ * field fails validation even when the user has clearly filled it in.
+ */
+export const TextInput = forwardRef(function TextInput(
+  { invalid, className = '', ...props },
+  ref
+) {
   return (
-    <textarea {...props} className={`${controlBase} ${stateClasses(invalid)} resize-y ${className}`} />
+    <input ref={ref} {...props} className={`${controlBase} ${stateClasses(invalid)} ${className}`} />
   );
-}
+});
+
+export const TextArea = forwardRef(function TextArea({ invalid, className = '', ...props }, ref) {
+  return (
+    <textarea
+      ref={ref}
+      {...props}
+      className={`${controlBase} ${stateClasses(invalid)} resize-y ${className}`}
+    />
+  );
+});
 
 /**
  * Native select, restyled. Native is deliberate: it gives correct keyboard
  * behaviour and the platform picker on mobile, which a custom dropdown would
  * have to reimplement badly.
  */
-export function Select({ invalid, className = '', children, ...props }) {
+export const Select = forwardRef(function Select(
+  { invalid, className = '', children, ...props },
+  ref
+) {
   return (
     <div className="relative">
       <select
+        ref={ref}
         {...props}
         className={`${controlBase} ${stateClasses(invalid)} cursor-pointer appearance-none pr-11 ${className}`}
       >
@@ -106,7 +129,7 @@ export function Select({ invalid, className = '', children, ...props }) {
       </svg>
     </div>
   );
-}
+});
 
 /** Submit button with an inline spinner while the request is in flight. */
 export function SubmitButton({ loading, children }) {
