@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Page not found — Hardik Ajmeriya</title>
+    <meta name="robots" content="noindex, follow" />
+    <meta name="theme-color" content="#f4f4f1" />
+    <link rel="icon" href="/images/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
+
+    <!--
+      Deliberately self-contained: no stylesheet, no script, no font files.
+
+      A 404 is served when something has already gone wrong, so it should not
+      depend on any other request succeeding. It also inherits the site's CSP,
+      which forbids inline <script> — there is none here, and the inline
+      <style> is permitted by style-src 'unsafe-inline'.
+
+      System fonts rather than the brand faces: pulling 40 KB of woff2 to
+      apologise for a missing page is the wrong trade.
+    -->
+    <style>
+      :root {
+        --paper: #f4f4f1;
+        --ink: #0b0b0d;
+        --muted: #5c5c64;
+        --line: #e2e2dd;
+        --accent: #3d2ef5;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1.5rem;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        width: 100%;
+        max-width: 560px;
+      }
+      .code {
+        margin: 0 0 1.75rem;
+        font-family: ui-monospace, 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+      h1 {
+        margin: 0 0 1.25rem;
+        font-size: clamp(2.4rem, 8vw, 4.2rem);
+        font-weight: 800;
+        line-height: 0.98;
+        letter-spacing: -0.04em;
+      }
+      p {
+        margin: 0 0 2.25rem;
+        max-width: 42ch;
+        font-size: 1.0625rem;
+        line-height: 1.65;
+        color: var(--muted);
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.875rem;
+      }
+      a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-height: 48px;
+        padding: 0.9rem 1.75rem;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background-color 0.25s, color 0.25s, border-color 0.25s;
+      }
+      .primary {
+        background: var(--ink);
+        color: var(--paper);
+      }
+      .primary:hover {
+        background: var(--accent);
+      }
+      .ghost {
+        border-color: var(--line);
+        color: var(--ink);
+      }
+      .ghost:hover {
+        border-color: var(--ink);
+        background: var(--ink);
+        color: var(--paper);
+      }
+      a:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+      }
+      footer {
+        margin-top: 3.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--line);
+        font-size: 0.8125rem;
+        color: var(--muted);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b0b0d;
+          --ink: #f4f4f1;
+          --muted: #9a9aa2;
+          --line: #26262b;
+          --accent: #8b7dff;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="code">Error 404</p>
+      <h1>This page doesn&rsquo;t exist.</h1>
+      <p>
+        The link may be out of date, or the address mistyped. Everything on this site lives on a
+        single page &mdash; so the homepage is very likely where you were headed.
+      </p>
+      <div class="actions">
+        <a class="primary" href="/">Back to the homepage</a>
+        <a class="ghost" href="/#contact">Get in touch</a>
+      </div>
+      <footer>Hardik Ajmeriya &mdash; full-stack development &amp; cloud deployment</footer>
+    </main>
+  </body>
+</html>

@@ -161,6 +161,22 @@ export default function Contact() {
 
       const json = await response.json().catch(() => null);
 
+      // The server has its own rate limit (worker/rateLimit.js) which is the
+      // one that actually binds — the COOLDOWN_SECONDS check above runs in
+      // this browser and anyone can skip it. Give it a distinct message so a
+      // genuine visitor who hits it knows to wait rather than assuming the
+      // form is broken.
+      if (response.status === 429) {
+        const wait = Number(response.headers.get('retry-after')) || 0;
+        const minutes = Math.ceil(wait / 60);
+        setFormError(
+          wait
+            ? `Too many submissions from this connection. Please try again in about ${minutes} minute${minutes === 1 ? '' : 's'}, or email me directly at ${CONTACT_EMAIL}.`
+            : `Too many submissions from this connection. Please email me directly at ${CONTACT_EMAIL}.`
+        );
+        return;
+      }
+
       if (json?.success) {
         lastSentAt.current = Date.now();
         setSucceeded(true);

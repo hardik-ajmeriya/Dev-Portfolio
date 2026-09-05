@@ -1,3 +1,22 @@
+/* Self-hosted fonts.
+ *
+ * Previously loaded from fonts.googleapis.com, which cost two extra DNS +
+ * TLS handshakes and — worse — a SEQUENTIAL round trip: fetch the CSS from
+ * googleapis, parse it, only then fetch the actual font files from gstatic.
+ * That sat directly on the critical path in front of the largest text on the
+ * page. Same-origin fonts reuse the connection that already delivered the
+ * HTML, and can be preloaded.
+ *
+ * Only the weights actually used are imported. Bricolage 400 and JetBrains
+ * Mono 500 were dropped because nothing referenced them.
+ */
+@import '@fontsource/bricolage-grotesque/latin-600.css';
+@import '@fontsource/bricolage-grotesque/latin-800.css';
+@import '@fontsource/inter/latin-400.css';
+@import '@fontsource/inter/latin-500.css';
+@import '@fontsource/inter/latin-600.css';
+@import '@fontsource/jetbrains-mono/latin-400.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -29,6 +48,56 @@
     @apply bg-accent text-paper;
   }
 
+  /* Visible keyboard focus, everywhere.
+   *
+   * The site previously relied on the browser default, which is close to
+   * invisible against this palette and is fully suppressed inside the
+   * mix-blend-difference navbar. :focus-visible means mouse users never see
+   * a ring, so there is no design cost to keeping it strong. */
+  :focus-visible {
+    outline: 2px solid theme('colors.accent');
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* Skip link — WCAG 2.4.1. Hidden until focused. */
+  .skip-link {
+    @apply sr-only;
+  }
+  .skip-link:focus {
+    @apply not-sr-only fixed left-4 top-4 z-[100] rounded-full bg-ink px-6 py-3
+           text-sm font-semibold text-paper no-underline;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   No-JavaScript fallback.
+
+   Scroll reveal (.rv) and the hero headline both start hidden and are shown
+   by JavaScript. That is fine when JS runs, but it meant a visitor whose
+   script failed — or blocked it — got a page that was present in the DOM and
+   completely invisible on screen. The prerendered HTML made this worse rather
+   than better: the content was all there, just at opacity 0.
+
+   `scripting: none` covers browsers with JS disabled; the <noscript> block is
+   the fallback for engines that do not support the media query yet.
+   --------------------------------------------------------------------------- */
+@media (scripting: none) {
+  .rv {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .hero-line {
+    transform: none !important;
+  }
+  .hero-fade {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+@layer base {
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -48,6 +117,15 @@
 
   .display {
     @apply font-display font-extrabold tracking-[-0.04em] leading-[0.94];
+  }
+
+  /* The hero headline. The clamp minimum used to be 3.2rem, which is wider
+   * than a 320px viewport can hold for the unbreakable word "production." —
+   * it was clipped by the body's overflow-x:hidden rather than scrolling, so
+   * the failure was silent. 2.35rem fits 320px with room to spare and the
+   * vw term takes over almost immediately above that. */
+  .hero-title {
+    @apply display text-[clamp(2.35rem,10.5vw,11rem)];
   }
 
   .sec-num {

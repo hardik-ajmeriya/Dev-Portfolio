@@ -2,16 +2,19 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/images/favicon.png" />
+    <link rel="icon" href="/images/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/png" href="/images/favicon.png" sizes="180x180" />
+    <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f4f4f1" />
+    <meta name="theme-color" content="#f4f4f1" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0b0d" media="(prefers-color-scheme: dark)" />
 
     <!-- Title leads with the name, because ranking for "Hardik Ajmeriya" is
          the primary goal. Role follows for relevance on skill searches. -->
     <title>Hardik Ajmeriya — Full-Stack Developer &amp; Cloud Engineer</title>
     <meta
       name="description"
-      content="Hardik Ajmeriya is a full-stack developer who builds MERN applications and deploys them to production on AWS with Docker, Kubernetes and CI/CD. Available for freelance projects."
+      content="Hardik Ajmeriya builds MERN web applications and deploys them to production on AWS with Docker, Kubernetes and CI/CD. Available for freelance projects."
     />
     <meta name="author" content="Hardik Ajmeriya" />
     <link rel="canonical" href="https://hardikajmeriya.com/" />
@@ -25,14 +28,36 @@
       property="og:description"
       content="MERN applications built end-to-end and deployed to production on AWS. Available for freelance projects."
     />
-    <meta property="og:image" content="https://hardikajmeriya.com/images/hero_pic.webp" />
+    <meta property="og:locale" content="en_IN" />
+    <!--
+      A purpose-built 1200x630 card, not the hero portrait.
+
+      Two reasons the old value was a problem. It pointed at a WebP, and
+      several link scrapers (notably some versions of the LinkedIn and
+      WhatsApp fetchers) will not render WebP and simply show no image. And
+      it was a 900x1213 portrait, so anything that did render it letterboxed
+      a tall photo into a wide slot. Declaring width/height also stops the
+      preview box reflowing while the image loads.
+    -->
+    <meta property="og:image" content="https://hardikajmeriya.com/images/og-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Hardik Ajmeriya — I build web apps and put them into production. MERN, AWS, Docker, Kubernetes, CI/CD."
+    />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Hardik Ajmeriya — Full-Stack Developer &amp; Cloud Engineer" />
     <meta
       name="twitter:description"
       content="MERN applications built end-to-end and deployed to production on AWS."
     />
-    <meta name="twitter:image" content="https://hardikajmeriya.com/images/hero_pic.webp" />
+    <meta name="twitter:image" content="https://hardikajmeriya.com/images/og-card.png" />
+    <meta
+      name="twitter:image:alt"
+      content="Hardik Ajmeriya — I build web apps and put them into production."
+    />
 
     <!--
       Structured data. This is the highest-value thing on the page for AI
@@ -40,8 +65,10 @@
       in a format models and search engines parse directly rather than infer.
 
       `sameAs` is what ties this domain to your other profiles and is the main
-      signal for ranking your own name. FILL IN the LinkedIn and X/Instagram
-      URLs below — they are placeholders right now.
+      signal for ranking your own name. Every URL here must resolve — a 404 in
+      sameAs weakens the entity rather than strengthening it, which is why the
+      x.com placeholder was removed instead of left in. Add X/Instagram back
+      only once the real handles exist.
     -->
     <script type="application/ld+json">
       {
@@ -96,8 +123,7 @@
           ],
           "sameAs": [
             "https://github.com/hardik-ajmeriya",
-            "https://www.linkedin.com/in/hardik-ajmeriya",
-            "https://x.com/REPLACE-WITH-YOUR-HANDLE"
+            "https://www.linkedin.com/in/hardik-ajmeriya"
           ],
           "makesOffer": [
             {
@@ -161,12 +187,18 @@
       }
     </script>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
+    <!--
+      Fonts are self-hosted (see src/index.css). They used to be loaded from
+      fonts.googleapis.com, which put a third-party stylesheet on the critical
+      path in front of the largest text on the page, and required two
+      sequential round trips before a single glyph could be fetched: the CSS
+      from googleapis, then the files from gstatic. Serving them from this
+      origin reuses the connection that already delivered the HTML.
+
+      prerender.js injects <link rel="preload"> tags for the two fonts the
+      first screen actually needs, using the hashed filenames from the build.
+    -->
+
     <!--
       WebSite entity. `alternateName` helps search engines connect variations
       of the name to this site.

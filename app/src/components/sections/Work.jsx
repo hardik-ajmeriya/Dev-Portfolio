@@ -14,11 +14,17 @@ function PresentationShot({ image, title }) {
     <div className="rv">
       <img
         src={image}
-        alt={title}
+        alt={`${title} — project screenshot`}
         loading="lazy"
         decoding="async"
+        /* Intrinsic dimensions let the browser reserve the right box before
+           the file arrives. Without them this image pushed the rest of the
+           page down as it loaded — a Cumulative Layout Shift the lazy
+           loading made more likely, not less. All project shots are 1536x1024. */
+        width={1536}
+        height={1024}
         data-cursor-grow
-        className="w-full rounded-xl transition-transform duration-700 ease-smooth hover:-translate-y-2"
+        className="aspect-[3/2] w-full rounded-xl object-cover transition-transform duration-700 ease-smooth hover:-translate-y-2"
       />
     </div>
   );
@@ -71,12 +77,34 @@ function TiltWindow({ image, browser, title }) {
 
     stage.addEventListener('mousemove', onMove);
     stage.addEventListener('mouseleave', onLeave);
-    tick();
+
+    // Only run the loop while the card is actually on screen. Previously every
+    // project kept its own requestAnimationFrame running for the entire visit,
+    // whether or not it was visible or hovered — four permanent loops writing
+    // transforms to elements nobody was looking at, which is main-thread time
+    // (Total Blocking Time) and battery for no benefit.
+    let running = false;
+    const start = () => {
+      if (running) return;
+      running = true;
+      tick();
+    };
+    const stop = () => {
+      running = false;
+      cancelAnimationFrame(frame);
+    };
+
+    const visObserver = new IntersectionObserver(
+      ([entry]) => (entry.isIntersecting ? start() : stop()),
+      { threshold: 0 }
+    );
+    visObserver.observe(stage);
 
     return () => {
       stage.removeEventListener('mousemove', onMove);
       stage.removeEventListener('mouseleave', onLeave);
-      cancelAnimationFrame(frame);
+      visObserver.disconnect();
+      stop();
     };
   }, []);
 
@@ -94,16 +122,21 @@ function TiltWindow({ image, browser, title }) {
           <span className="h-[10px] w-[10px] rounded-full bg-[#ff5f57]" />
           <span className="h-[10px] w-[10px] rounded-full bg-[#febc2e]" />
           <span className="h-[10px] w-[10px] rounded-full bg-[#28c840]" />
-          <div className="ml-[10px] flex h-[22px] flex-1 items-center overflow-hidden rounded-md bg-[#f0f0ed] px-[11px] font-mono text-[10px] text-[#9a9aa2]">
+          <div className="ml-[10px] flex h-[22px] flex-1 items-center overflow-hidden rounded-md bg-[#f0f0ed] px-[11px] font-mono text-[10px] text-chrome">
             {browser}
           </div>
         </div>
         <img
           src={image}
-          alt={title}
+          alt={`${title} — project screenshot`}
           loading="lazy"
           decoding="async"
-          className="block aspect-[16/10] w-full bg-[#eee] object-cover object-top"
+          width={1536}
+          height={1024}
+          /* aspect-[3/2] matches the source files exactly (1536x1024). The
+             frame was 16/10 before, so object-cover was silently cropping a
+             strip off the bottom of every screenshot. */
+          className="block aspect-[3/2] w-full bg-[#eee] object-cover object-top"
         />
       </div>
     </div>
@@ -185,18 +218,25 @@ export default function Work() {
                     </a>
                   </Magnetic>
                 ) : (
-                  <span
-                    className="inline-flex cursor-default items-center gap-2 rounded-full border border-line
-                               px-[22px] py-[13px] text-[13px] font-semibold text-muted opacity-40"
-                    title="Not deployed yet"
-                  >
-                    Live site — add URL
-                  </span>
+                  /* The "add URL" placeholder is a note to self, so it is
+                     shown ONLY in development. It was previously rendered in
+                     production too: a prospective client saw the words
+                     "Live site — add URL" on all four projects, which reads
+                     as an unfinished site rather than a deliberate one. */
+                  import.meta.env.DEV && (
+                    <span
+                      className="inline-flex cursor-default items-center gap-2 rounded-full border border-dashed
+                                 border-accent px-[22px] py-[13px] text-[13px] font-semibold text-accent"
+                      title="Dev-only reminder — not rendered in production"
+                    >
+                      DEV: add liveUrl
+                    </span>
+                  )
                 )}
 
                 {p.status === 'In development' ? (
-                  <span className="inline-flex items-center gap-2 font-mono text-[11px] text-accent2">
-                    <span className="h-[7px] w-[7px] animate-pulseDot rounded-full bg-accent2" />
+                  <span className="inline-flex items-center gap-2 font-mono text-[11px] text-accent2Text">
+                    <span aria-hidden="true" className="h-[7px] w-[7px] animate-pulseDot rounded-full bg-accent2" />
                     In active development
                   </span>
                 ) : null}

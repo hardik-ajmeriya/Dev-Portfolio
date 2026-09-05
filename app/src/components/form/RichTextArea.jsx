@@ -180,7 +180,7 @@ export default function RichTextArea({
           shortcut={WRAP_ACTIONS.bold.shortcut}
           onApply={() => applyWrap(WRAP_ACTIONS.bold.marker)}
         >
-          <span className="text-[13px] font-bold">B</span>
+          <span className="text-[13px] font-semibold">B</span>
         </ToolbarButton>
 
         <ToolbarButton

@@ -17,8 +17,17 @@
     // Exposes the static files to the Worker as env.ASSETS.
     "binding": "ASSETS",
 
-    // Unknown paths serve index.html so client-side anchors keep working.
-    "not_found_handling": "single-page-application",
+    // Serve dist/404.html, with an actual 404 status, for unknown paths.
+    //
+    // This was "single-page-application", which returns index.html with a
+    // 200 for EVERY path. That setting exists for apps with a client-side
+    // router that needs to see the URL — this site has no router at all, it
+    // is one document with #anchors, so the fallback did nothing useful and
+    // one thing harmful: every made-up URL (/pricing, /blog, /wp-admin)
+    // answered 200 with the full homepage. Google calls that a soft 404 and
+    // treats an unbounded set of duplicate URLs as a quality signal against
+    // the site.
+    "not_found_handling": "404-page",
 
     // Routes that must reach the Worker BEFORE the static asset layer.
     //

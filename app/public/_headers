@@ -15,7 +15,12 @@
   # actually loads third-party resources:
   #   static.cloudflareinsights.com  Cloudflare Web Analytics beacon
   #   cdn.jsdelivr.net               Devicon technology logos (Tech section)
-  #   fonts.googleapis/gstatic       Bricolage Grotesque, Inter, JetBrains Mono
+  #
+  # Fonts are NO LONGER third-party — they are self-hosted and served from
+  # this origin, so fonts.googleapis.com and fonts.gstatic.com have been
+  # removed from style-src and font-src entirely. Fewer origins trusted is
+  # strictly better; this also removes the only request that sent a visitor's
+  # IP address to Google before they had interacted with anything.
   #
   # Note there is no email provider listed in connect-src. The contact form
   # posts same-origin to /api/enquiry, and the Worker talks to Resend from
@@ -31,7 +36,7 @@
   #
   # script-src stays clean — no 'unsafe-inline', no 'unsafe-eval'. That is the
   # directive that actually matters for XSS; inline *styles* are far lower risk.
-  Content-Security-Policy: default-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://cloudflareinsights.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://cloudflareinsights.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
 
 # HTML must always revalidate so a deploy is picked up immediately.
 /
@@ -48,3 +53,11 @@
 # Images keep stable filenames, so cache for a day rather than a year.
 /images/*
   Cache-Control: public, max-age=86400
+
+# The resume had no cache policy at all, so it was revalidated on every view.
+/DevOps_V1.2.pdf
+  Cache-Control: public, max-age=86400
+
+# The 404 page must never be cached as though it were a real page.
+/404.html
+  Cache-Control: no-store

@@ -92,3 +92,11 @@ Thumbs.db
 # Optional / Future
 # ===============================
 coverage/
+
+# ===============================
+# Original full-size images
+# ===============================
+# Source PNG/JPGs kept for re-exporting. They live OUTSIDE app/public on
+# purpose — anything in public/ is copied verbatim into dist/ and deployed,
+# and these totalled ~29 MB of files that nothing on the site referenced.
+assets-original/

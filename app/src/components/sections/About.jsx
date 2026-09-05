@@ -13,6 +13,8 @@ export default function About() {
               alt="Hardik Ajmeriya, full-stack developer and cloud engineer"
               loading="lazy"
               decoding="async"
+              width={864}
+              height={1085}
               className="w-full rounded-[14px] grayscale transition-[filter] duration-700 hover:grayscale-0"
             />
           </div>

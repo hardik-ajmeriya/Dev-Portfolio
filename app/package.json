@@ -20,6 +20,9 @@
     "cf:tail": "wrangler tail"
   },
   "dependencies": {
+    "@fontsource/bricolage-grotesque": "^5.2.5",
+    "@fontsource/inter": "^5.2.5",
+    "@fontsource/jetbrains-mono": "^5.2.5",
     "@hookform/resolvers": "^5.1.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

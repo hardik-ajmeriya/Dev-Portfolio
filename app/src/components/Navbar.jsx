@@ -20,6 +20,18 @@ export default function Navbar() {
     };
   }, [open]);
 
+  // Escape closes the menu. Expected of anything that covers the screen, and
+  // without it a keyboard user who opened the menu had no way to dismiss it
+  // except finding the toggle again.
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
+
   return (
     <>
       <nav className="fixed inset-x-0 top-0 z-50 text-white mix-blend-difference">
@@ -40,25 +52,30 @@ export default function Navbar() {
             Start a project →
           </a>
 
+          {/* The visible bars stay 28x24, but the button itself is 44x44 —
+              the minimum comfortable touch target (WCAG 2.5.8 / Lighthouse
+              tap-target audit). -mr-2.5 keeps the bars optically aligned with
+              the edge despite the extra padding. */}
           <button
             type="button"
             aria-label={open ? 'Close menu' : 'Open menu'}
             aria-expanded={open}
+            aria-controls="mobile-menu"
             onClick={() => setOpen((v) => !v)}
-            className="flex h-6 w-7 flex-col justify-center gap-[5px] md:hidden"
+            className="-mr-2.5 flex h-11 w-11 flex-col items-center justify-center gap-[5px] md:hidden"
           >
             <span
-              className={`block h-[1.5px] w-full bg-white transition-transform duration-300 ${
+              className={`block h-[1.5px] w-7 bg-white transition-transform duration-300 ${
                 open ? 'translate-y-[6.5px] rotate-45' : ''
               }`}
             />
             <span
-              className={`block h-[1.5px] w-full bg-white transition-opacity duration-300 ${
+              className={`block h-[1.5px] w-7 bg-white transition-opacity duration-300 ${
                 open ? 'opacity-0' : ''
               }`}
             />
             <span
-              className={`block h-[1.5px] w-full bg-white transition-transform duration-300 ${
+              className={`block h-[1.5px] w-7 bg-white transition-transform duration-300 ${
                 open ? '-translate-y-[6.5px] -rotate-45' : ''
               }`}
             />
@@ -68,6 +85,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       <div
+        id="mobile-menu"
         className={`fixed inset-0 z-40 bg-paper transition-[opacity,visibility] duration-500 md:hidden ${
           open ? 'visible opacity-100' : 'invisible opacity-0'
         }`}

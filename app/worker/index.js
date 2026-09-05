@@ -26,6 +26,7 @@
 
 import { clientAutoReply, ownerNotification, BRAND } from './emails.js';
 import { handleAdminApi, requireAccess, saveEnquiry } from './admin.js';
+import { checkRateLimit, sweepExpired } from './rateLimit.js';
 import { adminPage } from './adminPage.js';
 
 const MAX_FIELD = 5000;
@@ -234,6 +235,31 @@ export default {
       return json({ success: false, message: 'Please check the form and try again.', errors }, 422);
     }
 
+    // ---- Rate limiting -------------------------------------------------
+    // Deliberately AFTER validation (which is pure CPU and costs nothing) and
+    // BEFORE anything expensive: the database write and the two Resend calls.
+    // A malformed request therefore does not consume a visitor's quota, but
+    // nothing that costs money or sends mail happens without passing here.
+    const rate = await checkRateLimit(request, data.email, env);
+    if (!rate.ok) {
+      console.warn(`Rate limit hit: ${rate.limit}`);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message:
+            'Too many submissions from this connection. Please wait a little, or email me directly.',
+          code: 'rate_limited',
+        }),
+        {
+          status: 429,
+          headers: {
+            'content-type': 'application/json; charset=utf-8',
+            'retry-after': String(rate.retryAfter),
+          },
+        }
+      );
+    }
+
     // Missing secret is a deployment mistake, not a visitor's problem — say
     // so explicitly rather than letting it look like a generic upstream
     // failure. This is the most common cause of a broken form.
@@ -279,6 +305,11 @@ export default {
     if (!reply.ok) {
       console.error('Client auto-reply failed', reply.status, reply.detail);
     }
+
+    // Tidy closed rate-limit windows on the way out. Only on a successful
+    // submission, so it runs roughly as often as there is anything to clean
+    // up, and never adds latency to the failure paths.
+    await sweepExpired(env);
 
     return json({ success: true });
   },

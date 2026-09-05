@@ -36,6 +36,10 @@ function TechCell({ item, index }) {
           alt=""
           loading="lazy"
           decoding="async"
+          /* 36px = the h-9 w-9 the class list renders at. Declared so the grid
+             does not reflow as thirty-odd third-party logos trickle in. */
+          width={36}
+          height={36}
           onError={() => setFailed(true)}
           className="h-9 w-9 object-contain opacity-50 grayscale transition-all duration-400 ease-smooth
                      group-hover:-translate-y-[5px] group-hover:scale-[1.08] group-hover:opacity-100
@@ -84,7 +88,9 @@ export default function Tech() {
                 type="button"
                 onClick={() => setActive(c.id)}
                 aria-pressed={active === c.id}
-                className={`rounded-full border px-5 py-[11px] font-mono text-[11.5px] uppercase
+                /* min-h-[44px] so the filter chips clear the tap-target
+                   minimum on a phone; they were ~38px. */
+                className={`min-h-[44px] rounded-full border px-5 py-[11px] font-mono text-[11.5px] uppercase
                             tracking-[0.06em] transition duration-300 ${
                               active === c.id
                                 ? 'border-ink bg-ink text-paper'
