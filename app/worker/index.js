@@ -25,6 +25,8 @@
  */
 
 import { clientAutoReply, ownerNotification, BRAND } from './emails.js';
+import { handleAdminApi, requireAccess, saveEnquiry } from './admin.js';
+import { adminPage } from './adminPage.js';
 
 const MAX_FIELD = 5000;
 
@@ -140,7 +142,28 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // Everything except the API route is a static asset.
+    // ---- Admin, behind Cloudflare Access -------------------------------
+    // Access authenticates at the edge before the request reaches here; the
+    // checks inside are defence in depth, not the primary control.
+    if (url.pathname.startsWith('/api/admin')) {
+      return handleAdminApi(request, env, url);
+    }
+
+    if (url.pathname === '/admin' || url.pathname === '/admin/') {
+      const auth = requireAccess(request, env);
+      if (!auth.ok) return auth.response;
+      return new Response(adminPage(auth.email), {
+        headers: {
+          'content-type': 'text/html; charset=utf-8',
+          // Never cache a page containing client data.
+          'cache-control': 'no-store, must-revalidate',
+          // The panel is deliberately excluded from search engines.
+          'x-robots-tag': 'noindex, nofollow',
+        },
+      });
+    }
+
+    // ---- Everything except the enquiry endpoint is a static asset -------
     if (url.pathname !== '/api/enquiry') {
       return env.ASSETS.fetch(request);
     }
@@ -186,6 +209,14 @@ export default {
         },
         503
       );
+    }
+
+    // Persist before emailing. If the database write fails the submission
+    // still goes through — losing an enquiry would be far worse than losing
+    // a row — but doing it first means a send failure never loses the data.
+    const saved = await saveEnquiry(data, request, env);
+    if (!saved.ok && !saved.skipped) {
+      console.error('Enquiry not persisted, continuing to email anyway:', saved.error);
     }
 
     const owner = await notifyOwner(data, env);

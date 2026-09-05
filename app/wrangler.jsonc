@@ -25,6 +25,24 @@
     "run_worker_first": ["/api/*"]
   },
 
+  // Enquiries are stored here so the /admin panel has something to show.
+  // Create it once with:  npx wrangler d1 create hardik-enquiries
+  // then paste the returned database_id below. See ADMIN.md.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hardik-enquiries",
+      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  "vars": {
+    // Only this address may read the admin panel, even if the Cloudflare
+    // Access policy is ever widened by mistake. Not a secret.
+    "ADMIN_EMAIL": "hardikpt95@gmail.com"
+  },
+
   "observability": {
     "enabled": true
   }
