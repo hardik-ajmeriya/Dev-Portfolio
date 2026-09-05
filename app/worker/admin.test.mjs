@@ -86,7 +86,7 @@ globalThis.fetch = withCerts(async () => ({ ok:true, json:async()=>({success:tru
 ADMIN = await tokenHeaders();
 
 const env = { RESEND_API_KEY:'re_1', ADMIN_EMAIL:'hardikpt95@gmail.com', DB:db,
-  ACCESS_TEAM_DOMAIN:TEAM, ACCESS_AUD:AUD,
+  ACCESS_TEAM_DOMAIN:TEAM, ACCESS_AUD:AUD, PUBLIC_HOST:'hardikajmeriya.com',
   ASSETS:{ fetch:async()=>new Response('static') } };
 
 // A REAL signed Access token, minted with a throwaway RSA key. The Worker
@@ -229,7 +229,53 @@ await t('production panel has NO dev banner', async()=>{
 });
 
 console.log();
+console.log('=== PRIVATE HOSTS (the unreleased design must not be readable) ===');
+// The failure this closes: an Access application scoped to the path `admin`
+// protects the panel but leaves the site ROOT public on the same subdomain.
+// The panel looks correctly locked; the design is not.
+const preview = (path, opts={}) =>
+  new Request('https://admin.hardikajmeriya.com'+path, opts);
+
+await t('preview host root without a token -> 401, NOT the site', async()=>{
+  const r = await mod.fetch(preview('/'), env);
+  eq(r.status,401,'status');
+  const body = await r.text();
+  if (body.includes('static')) throw new Error('served the site to an unauthenticated visitor');
+});
+await t('preview host deep path without a token -> 401', async()=>{
+  const r = await mod.fetch(preview('/about'), env);
+  eq(r.status,401,'status');
+});
+await t('workers.dev host without a token -> 401', async()=>{
+  const r = await mod.fetch(new Request('https://hardik-portfolio.workers.dev/'), env);
+  eq(r.status,401,'status');
+});
+await t('preview host WITH a valid token -> the site, marked noindex', async()=>{
+  const r = await mod.fetch(preview('/',{headers: await tokenHeaders()}), env);
+  eq(r.status,200,'status');
+  eq(await r.text(),'static','body');
+  if(!(r.headers.get('x-robots-tag')||'').includes('noindex'))
+    throw new Error('preview is crawlable — it would compete with the real domain');
+});
+await t('preview host with a token for another user -> 403', async()=>{
+  const r = await mod.fetch(preview('/',{headers: await tokenHeaders({email:'someone@else.com'})}), env);
+  eq(r.status,403,'status');
+});
+await t('the PUBLIC host is unaffected — no token needed', async()=>{
+  const r = await mod.fetch(req('/'), env);
+  eq(r.status,200,'status');
+  eq(await r.text(),'static','body');
+});
+
+console.log();
 console.log('=== ROUTING CONFIG (a code-correct Worker is useless if unrouted) ===');
+await t('wrangler.jsonc sets PUBLIC_HOST', async()=>{
+  const fs = await import('node:fs');
+  const raw = fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
+  const cfg = JSON.parse(raw.replace(/^\s*\/\/.*$/gm, ''));
+  if (!cfg.vars?.PUBLIC_HOST)
+    throw new Error('PUBLIC_HOST missing — every host would be treated as public and the preview would be readable');
+});
 await t('wrangler.jsonc routes /admin through the Worker first', async()=>{
   const fs = await import('node:fs');
   const raw = fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');

@@ -6,7 +6,7 @@ globalThis.fetch = async (url, opts) => {
   if (String(url).includes('resend')) return { ok:true, text:async()=>'' };
   return { ok:false, json:async()=>({}), text:async()=>'' };
 };
-const env = { RESEND_API_KEY:'re_123',
+const env = { RESEND_API_KEY:'re_123', PUBLIC_HOST:'hardikajmeriya.com',
   ASSETS:{ fetch:async()=>new Response('static',{status:200}) } };
 
 const post = (body, origin='https://hardikajmeriya.com') => new Request(
@@ -26,8 +26,12 @@ const eq = (a,b,m) => { if(a!==b) throw new Error(`${m}: got ${JSON.stringify(a)
 
 console.log('=== ROUTING ===');
 await t('non-API path serves static assets', async()=>{
-  const r = await mod.fetch(new Request('https://x.com/about'), env);
+  const r = await mod.fetch(new Request('https://hardikajmeriya.com/about'), env);
   eq(await r.text(),'static','body');
+});
+await t('public host serves the site with no noindex header', async()=>{
+  const r = await mod.fetch(new Request('https://hardikajmeriya.com/'), env);
+  eq(r.headers.get('x-robots-tag'),null,'x-robots-tag');
 });
 await t('GET /api/enquiry rejected (405)', async()=>{
   const r = await mod.fetch(new Request('https://hardikajmeriya.com/api/enquiry'), env);

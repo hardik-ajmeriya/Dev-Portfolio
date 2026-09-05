@@ -1,15 +1,30 @@
 # Admin panel
 
-A private dashboard at **`hardikajmeriya.com/admin`** listing every enquiry,
-with status tracking, private notes, follow-up dates, search and CSV export.
+A private dashboard at **`admin.hardikajmeriya.com/admin`** listing every
+enquiry, with status tracking, private notes, follow-up dates, search and CSV
+export.
 
 Free: Cloudflare D1 for storage, Cloudflare Access for authentication.
+
+## Which hostname does what
+
+| Host | Serves | Public? |
+| --- | --- | --- |
+| `hardikajmeriya.com` | the coming-soon sign (a separate Worker) | yes |
+| `admin.hardikajmeriya.com/admin` | the enquiries panel | no |
+| `admin.hardikajmeriya.com/` | a private preview of the real site | no |
+
+That second row is why the whole subdomain is locked, not just `/admin`. The
+finished site is not launched yet, and an unlaunched design sitting on a
+guessable subdomain is a leak — it can also be crawled and then compete with
+the real domain for your own name once you do launch.
 
 ---
 
 ## How the "only me" part works
 
-Two layers, and the second is the one that actually guarantees it.
+Three layers. The second is the one that actually guarantees it; the third
+covers a mistake that is very easy to make in the dashboard.
 
 **1. Cloudflare Access at the edge.** An unauthenticated request is stopped
 before it reaches your code — no login page of yours to attack, no session
@@ -48,6 +63,21 @@ setting says. **Security by cryptography rather than by configuration.**
 It **fails closed**: if `ACCESS_TEAM_DOMAIN` or `ACCESS_AUD` are missing, every
 admin request is denied. There is no fallback to the header.
 
+**3. The Worker gates every path on a non-public hostname.** `PUBLIC_HOST` in
+`wrangler.jsonc` names the one host the site may be served on openly. On any
+other host the Worker answers — `admin.hardikajmeriya.com`, or a `*.workers.dev`
+URL if that subdomain is ever switched on — *every* request needs a verified
+Access token, not just `/admin`.
+
+This exists because of a specific, silent failure: an Access application
+scoped to the **path** `admin` protects the panel perfectly while leaving the
+site root on that subdomain completely open. Signing in works, the panel looks
+locked, and the unreleased design is public the whole time. The symptom only
+shows up if you open the bare subdomain in a private window.
+
+Responses on those hosts also carry `X-Robots-Tag: noindex, nofollow`, so a
+preview can never be indexed even if the gate is later loosened.
+
 Writing auth yourself instead would mean password hashing, session management,
 CSRF protection, brute-force limits and timing-safe comparison — five chances
 to get it subtly wrong, in the one place where wrong means leaking client data.
@@ -82,19 +112,11 @@ Self-hosted**
 | --- | --- |
 | Application name | `Portfolio admin` |
 | Session duration | 24 hours (or 1 week if you prefer) |
+| Subdomain | `admin` |
 | Domain | `hardikajmeriya.com` |
-| Path | `admin` |
+| Path | **leave empty** |
 
-Add a **second application** for the API, otherwise the panel loads but every
-request it makes is public:
-
-| Field | Value |
-| --- | --- |
-| Application name | `Portfolio admin API` |
-| Domain | `hardikajmeriya.com` |
-| Path | `api/admin` |
-
-Then add a policy to each:
+Then add a policy:
 
 - Action: **Allow**
 - Rule: **Emails** → `hardikpt95@gmail.com`
@@ -102,10 +124,14 @@ Then add a policy to each:
 Login method: Google, or the built-in one-time PIN, which emails you a code and
 needs no identity provider setup at all.
 
-> **Both applications matter.** Protecting only `/admin` leaves
-> `/api/admin/enquiries` reachable directly. The Worker's JWT check would still
-> refuse it, but you do not want that to be the only thing standing between the
-> internet and your client list.
+> **Leave the path empty on purpose.** Typing `admin` there protects
+> `/admin` and nothing else — the panel is locked, `/api/admin` is reachable
+> directly, and the whole unreleased site is served from the subdomain root to
+> anyone at all. An empty path covers the entire hostname, which is what you
+> want, and it means one application instead of two.
+>
+> The Worker refuses to serve that subdomain without a token regardless, so
+> getting this wrong now fails visibly (a 401) rather than silently.
 
 ### 4. Copy the two Access values into wrangler.jsonc
 
@@ -136,22 +162,31 @@ Do not skip this. Run it from a terminal, signed out:
 
 ```powershell
 # 1. No credentials at all -> must be 401
-curl.exe -s -o NUL -w "%{http_code}`n" https://hardikajmeriya.com/api/admin/enquiries
+curl.exe -s -o NUL -w "%{http_code}`n" https://admin.hardikajmeriya.com/api/admin/enquiries
 
 # 2. The forged header -> must ALSO be 401, not 200
-curl.exe -s -o NUL -w "%{http_code}`n" ^
-  -H "cf-access-authenticated-user-email: hardikpt95@gmail.com" ^
-  https://hardikajmeriya.com/api/admin/enquiries
+curl.exe -s -o NUL -w "%{http_code}`n" `
+  -H "cf-access-authenticated-user-email: hardikpt95@gmail.com" `
+  https://admin.hardikajmeriya.com/api/admin/enquiries
 
 # 3. The panel itself -> 401 or an Access login redirect, never the page
-curl.exe -s -o NUL -w "%{http_code}`n" https://hardikajmeriya.com/admin
+curl.exe -s -o NUL -w "%{http_code}`n" https://admin.hardikajmeriya.com/admin
+
+# 4. The subdomain ROOT -> must NOT return the site
+curl.exe -s -o NUL -w "%{http_code}`n" https://admin.hardikajmeriya.com/
 ```
 
-**If check 2 returns 200, stop and tell me.** That would mean the JWT
-verification is not running, and your client data is public.
+**If check 2 returns 200, stop.** That would mean the JWT verification is not
+running, and your client data is public.
 
-Then open `hardikajmeriya.com/admin` in a browser, sign in through Access, and
-confirm you can see the panel.
+**If check 4 returns 200 with the site**, the Access application is scoped to a
+path instead of the whole host — see step 3. The Worker gate should make this
+impossible, but check it anyway; that is what the check is for.
+
+Then open `admin.hardikajmeriya.com/admin` **in a private window**, sign in
+through Access, and confirm you can see the panel. A private window matters: a
+normal one may still hold a valid Access session and show you the panel whether
+or not the policy is working.
 
 ---
 

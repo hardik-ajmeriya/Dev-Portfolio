@@ -60,7 +60,19 @@
     //
     // See ADMIN.md. Neither is a secret; both are safe in git.
     "ACCESS_TEAM_DOMAIN": "curly-moon-74da.cloudflareaccess.com",
-    "ACCESS_AUD": "910c3c3d5eb5c146aaf3e03ed77e4c39bf62b7ce68c51d60f3a97348cc047e05"
+    "ACCESS_AUD": "910c3c3d5eb5c146aaf3e03ed77e4c39bf62b7ce68c51d60f3a97348cc047e05",
+
+    // The ONE hostname the site may be served publicly on. Every other host
+    // this Worker answers on — admin.hardikajmeriya.com, and *.workers.dev
+    // if that subdomain is ever enabled — requires a verified Access token
+    // for every path, not just /admin.
+    //
+    // This exists because an Access application scoped to the path `admin`
+    // protects the panel while leaving the site root wide open, which is a
+    // dashboard mistake that looks identical to a correct setup until you
+    // check in a private window. The Worker no longer depends on getting
+    // that right.
+    "PUBLIC_HOST": "hardikajmeriya.com"
   },
 
   "observability": {

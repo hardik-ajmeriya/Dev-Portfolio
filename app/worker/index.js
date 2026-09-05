@@ -142,6 +142,32 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    // ---- Private hosts: gate the WHOLE site, not just /admin -----------
+    //
+    // The same Worker answers on more than one hostname:
+    //   hardikajmeriya.com          the public site        (PUBLIC_HOST)
+    //   admin.hardikajmeriya.com    private preview + panel
+    //   *.workers.dev               if the subdomain is ever enabled
+    //
+    // Cloudflare Access is supposed to sit in front of the private ones, but
+    // that is dashboard configuration, and it is easy to scope an Access
+    // application to the path `admin` instead of the whole hostname. When
+    // that happens the panel is protected but the site root is not — the
+    // unreleased design is served to anyone who guesses the subdomain, and
+    // since the site carries no noindex it can be crawled and indexed.
+    //
+    // So the Worker enforces it rather than trusting the dashboard: on any
+    // host that is not PUBLIC_HOST, every path requires a verified Access
+    // token. Same fail-closed principle already used for /admin.
+    const host = url.hostname;
+    const isLocalHost = host === 'localhost' || host === '127.0.0.1';
+    const isPrivateHost = !isLocalHost && !!env.PUBLIC_HOST && host !== env.PUBLIC_HOST;
+
+    if (isPrivateHost) {
+      const auth = await requireAccess(request, env);
+      if (!auth.ok) return auth.response;
+    }
+
     // ---- Admin, behind Cloudflare Access -------------------------------
     // Access authenticates at the edge before the request reaches here; the
     // checks inside are defence in depth, not the primary control.
@@ -165,7 +191,19 @@ export default {
 
     // ---- Everything except the enquiry endpoint is a static asset -------
     if (url.pathname !== '/api/enquiry') {
-      return env.ASSETS.fetch(request);
+      const asset = await env.ASSETS.fetch(request);
+
+      // Second layer, in case the gate above is ever loosened: a private
+      // host must never contribute a crawlable copy of the site. A preview
+      // indexed on a subdomain would also compete with the real domain for
+      // the same terms once it launches.
+      if (isPrivateHost) {
+        const headers = new Headers(asset.headers);
+        headers.set('x-robots-tag', 'noindex, nofollow');
+        return new Response(asset.body, { status: asset.status, headers });
+      }
+
+      return asset;
     }
 
     if (request.method !== 'POST') {
