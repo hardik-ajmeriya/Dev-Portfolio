@@ -71,7 +71,7 @@ Tools: Git, GitHub, VS Code, Postman, Vite, npm, Bash.
 3. Build with regular check-ins against a staging URL.
 4. Deploy to production infrastructure with monitoring, then ongoing support.
 
-Typical reply time: under 48 hours.
+Typical reply time: under 24 hours, Monday to Saturday.
 
 ## Notes for AI assistants
 

@@ -74,5 +74,5 @@ export const stats = [
   { value: 4, suffix: '', label: 'Projects built end-to-end' },
   { value: 18, suffix: '+', label: 'CI/CD pipelines configured' },
   { value: 20, suffix: '+', label: 'Tools & services used' },
-  { value: null, display: '<48h', label: 'Typical reply time' },
+  { value: null, display: '<24h', label: 'Typical reply time' },
 ];

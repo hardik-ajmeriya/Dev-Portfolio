@@ -7,32 +7,46 @@ import Magnetic from '../Magnetic';
 
 export const CONTACT_EMAIL = 'hardik.ajmeriya89@gmail.com';
 
+/**
+ * Deliberately minimal: four inputs.
+ *
+ * Every additional field measurably reduces completion, and this is a first
+ * contact, not an intake form. Project type, timeline, company, required
+ * services and preferred contact method are all things you can ask in the
+ * reply — by which point the person is already talking to you.
+ *
+ * Budget is the one qualifier kept, because it filters out mismatches before
+ * you spend a call on them. It stays optional so it never blocks a send.
+ */
+
 const schema = yup.object().shape({
-  name: yup.string().required('Name is required').min(2, 'Name must be at least 2 characters'),
-  email: yup.string().email('Invalid email').required('Email is required'),
-  subject: yup
-    .string()
-    .required('Subject is required')
-    .min(5, 'Subject must be at least 5 characters'),
+  name: yup.string().required('Please add your name').min(2, 'That looks too short'),
+  email: yup.string().email('That email address looks wrong').required('Please add your email'),
   budget: yup.string(),
-  // Honeypot. Must be in the schema or yupResolver strips it from `data`
-  // before the submit handler can check it. Never shown, never required.
-  botcheck: yup.string(),
   message: yup
     .string()
-    .required('Message is required')
-    .min(10, 'Message must be at least 10 characters'),
+    .required('Please tell me a little about the project')
+    .min(20, 'A sentence or two would help me reply properly'),
+  // Honeypot. Must be declared or yupResolver strips it before the handler.
+  botcheck: yup.string(),
 });
 
-const inputBase =
-  'w-full rounded-xl border border-line bg-white px-4 py-3.5 text-[15px] text-ink ' +
-  'placeholder:text-muted/70 outline-none transition focus:border-ink focus:ring-2 focus:ring-accent/25';
+/** Minimum seconds between two submissions from the same browser. */
+const COOLDOWN_SECONDS = 45;
+/** Nobody reads and completes this form faster than this. */
+const MIN_FILL_SECONDS = 3;
 
-function Field({ label, error, children }) {
+const field =
+  'w-full rounded-xl border border-line bg-white px-4 py-3.5 text-[15px] text-ink ' +
+  'placeholder:text-muted/60 outline-none transition duration-300 ' +
+  'focus:border-ink focus:ring-4 focus:ring-accent/10';
+
+function Field({ label, error, hint, children }) {
   return (
     <label className="block">
-      <span className="mb-2 block font-mono text-[11px] uppercase tracking-[0.1em] text-muted">
-        {label}
+      <span className="mb-2 flex items-baseline justify-between gap-3">
+        <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted">{label}</span>
+        {hint ? <span className="text-[11px] text-muted/70">{hint}</span> : null}
       </span>
       {children}
       {error ? <span className="mt-1.5 block text-[12px] text-red-600">{error}</span> : null}
@@ -40,18 +54,11 @@ function Field({ label, error, children }) {
   );
 }
 
-/** Minimum seconds between two submissions from the same browser. */
-const COOLDOWN_SECONDS = 45;
-/** A human cannot meaningfully fill this form faster than this. */
-const MIN_FILL_SECONDS = 3;
-
 export default function Contact() {
   const groupRef = useRevealGroup();
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState(null); // { ok: boolean, message: string }
+  const [result, setResult] = useState(null);
 
-  // Timestamps used for the two spam checks below. Refs, not state, so
-  // updating them never triggers a re-render.
   const mountedAt = useRef(Date.now());
   const lastSentAt = useRef(0);
 
@@ -63,28 +70,24 @@ export default function Contact() {
   } = useForm({ resolver: yupResolver(schema) });
 
   const onSubmit = async (data) => {
-    // --- spam check 1: honeypot ---------------------------------------
-    // `botcheck` is hidden from humans. Bots that blindly fill every field
-    // will set it, and Web3Forms rejects those server-side too. Bailing here
-    // saves the request and gives the bot no feedback either way.
+    // Honeypot tripped — pretend it worked, tell the bot nothing.
     if (data.botcheck) {
-      setResult({ ok: true, message: "Message sent. I'll reply within 48 hours." });
+      setResult({ ok: true, message: "Thanks — I'll reply within 24 hours." });
       reset();
       return;
     }
 
-    // --- spam check 2: filled impossibly fast --------------------------
-    const secondsOnPage = (Date.now() - mountedAt.current) / 1000;
-    if (secondsOnPage < MIN_FILL_SECONDS) {
+    if ((Date.now() - mountedAt.current) / 1000 < MIN_FILL_SECONDS) {
       setResult({ ok: false, message: 'That was a bit quick — please try again.' });
       return;
     }
 
-    // --- spam check 3: cooldown between sends --------------------------
     const sinceLast = (Date.now() - lastSentAt.current) / 1000;
     if (lastSentAt.current && sinceLast < COOLDOWN_SECONDS) {
-      const wait = Math.ceil(COOLDOWN_SECONDS - sinceLast);
-      setResult({ ok: false, message: `Already sent — please wait ${wait}s before sending again.` });
+      setResult({
+        ok: false,
+        message: `Already sent — please wait ${Math.ceil(COOLDOWN_SECONDS - sinceLast)}s.`,
+      });
       return;
     }
 
@@ -92,18 +95,17 @@ export default function Contact() {
     setResult(null);
 
     try {
-      const accessKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
-
       const formData = new FormData();
-      formData.append('access_key', accessKey || '');
-      formData.append('botcheck', '');
+      formData.append('access_key', import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || '');
       formData.append('name', data.name);
       formData.append('email', data.email);
       formData.append('replyto', data.email);
-      formData.append('from_name', 'Portfolio Contact Form');
-      formData.append('subject', data.subject);
+      formData.append('from_name', 'hardikajmeriya.com');
+      // Built rather than asked for — one less thing on screen.
+      formData.append('subject', `New project enquiry from ${data.name}`);
       formData.append('budget', data.budget || 'Not specified');
       formData.append('message', data.message);
+      formData.append('botcheck', '');
 
       const response = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
@@ -113,13 +115,16 @@ export default function Contact() {
 
       if (json.success) {
         lastSentAt.current = Date.now();
-        setResult({ ok: true, message: "Message sent. I'll reply within 48 hours." });
+        setResult({ ok: true, message: "Thanks — I'll reply within 24 hours." });
         reset();
       } else {
         setResult({ ok: false, message: json.message || 'Something went wrong. Please try again.' });
       }
     } catch {
-      setResult({ ok: false, message: 'Network error. Please try again later.' });
+      setResult({
+        ok: false,
+        message: `Network error. You can also email me directly at ${CONTACT_EMAIL}.`,
+      });
     } finally {
       setSubmitting(false);
     }
@@ -129,7 +134,7 @@ export default function Contact() {
     <section id="contact" ref={groupRef} className="border-t border-line">
       <div className="shell">
         <div className="grid grid-cols-1 gap-14 py-32 lg:grid-cols-[1fr_1fr] lg:gap-24">
-          {/* Left: pitch */}
+          {/* Left: the pitch and the direct details */}
           <div className="rv">
             <div className="sec-num">07 / CONTACT</div>
             <h2 className="display mt-4 text-[clamp(2.8rem,7vw,6rem)]">
@@ -143,7 +148,7 @@ export default function Contact() {
               not the right fit, I&rsquo;ll say so.
             </p>
 
-            <div className="mt-12 space-y-6">
+            <div className="mt-12 space-y-7">
               <div>
                 <div className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted">
                   Email
@@ -160,84 +165,103 @@ export default function Contact() {
 
               <div>
                 <div className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted">
-                  Response time
+                  Average response time
                 </div>
-                <div className="mt-1.5 text-lg">Usually within 48 hours</div>
+                <div className="mt-1.5 text-lg">Within 24 hours</div>
+                <div className="text-[13px] text-muted">Monday &ndash; Saturday</div>
+              </div>
+
+              <div>
+                <div className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted">
+                  Location
+                </div>
+                <div className="mt-1.5 text-lg">Rajkot, Gujarat, India</div>
+                <div className="text-[13px] text-muted">Working with clients worldwide</div>
               </div>
             </div>
           </div>
 
-          {/* Right: form */}
-          <form onSubmit={handleSubmit(onSubmit)} noValidate className="rv space-y-5">
-            {/* Honeypot. Hidden from people and from screen readers, but a
-                scripted bot filling every input will trip it. Not a `hidden`
-                class — some bots skip those — but off-screen and inert. */}
-            <div aria-hidden="true" className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden">
+          {/* Right: four fields, nothing more */}
+          <form onSubmit={handleSubmit(onSubmit)} noValidate className="rv">
+            {/* Honeypot — off-screen, hidden from assistive tech. */}
+            <div
+              aria-hidden="true"
+              className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden"
+            >
               <label>
                 Do not fill this in
                 <input {...register('botcheck')} type="text" tabIndex={-1} autoComplete="off" />
               </label>
             </div>
 
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="Your name" error={errors.name?.message}>
-                <input {...register('name')} className={inputBase} placeholder="Jane Doe" />
+            <div className="space-y-5">
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field label="Your name" error={errors.name?.message}>
+                  <input
+                    {...register('name')}
+                    className={field}
+                    placeholder="Jane Doe"
+                    autoComplete="name"
+                  />
+                </Field>
+
+                <Field label="Email" error={errors.email?.message}>
+                  <input
+                    {...register('email')}
+                    type="email"
+                    className={field}
+                    placeholder="jane@company.com"
+                    autoComplete="email"
+                  />
+                </Field>
+              </div>
+
+              <Field label="Budget" hint="optional" error={errors.budget?.message}>
+                <select {...register('budget')} className={field} defaultValue="">
+                  <option value="">Prefer not to say</option>
+                  <option>Under ₹50,000</option>
+                  <option>₹50,000 – ₹1,50,000</option>
+                  <option>₹1,50,000 – ₹4,00,000</option>
+                  <option>₹4,00,000+</option>
+                </select>
               </Field>
 
-              <Field label="Email" error={errors.email?.message}>
-                <input
-                  {...register('email')}
-                  type="email"
-                  className={inputBase}
-                  placeholder="jane@company.com"
+              <Field label="What do you need built?" error={errors.message?.message}>
+                <textarea
+                  {...register('message')}
+                  rows={6}
+                  className={`${field} resize-y`}
+                  placeholder="A few lines about the project, who it's for, and any deadline you have in mind."
                 />
               </Field>
-            </div>
 
-            <Field label="Subject" error={errors.subject?.message}>
-              <input
-                {...register('subject')}
-                className={inputBase}
-                placeholder="New web app for my business"
-              />
-            </Field>
-
-            <Field label="Budget range (optional)" error={errors.budget?.message}>
-              <select {...register('budget')} className={inputBase} defaultValue="">
-                <option value="">Prefer not to say</option>
-                <option>Under ₹50,000</option>
-                <option>₹50,000 – ₹1,50,000</option>
-                <option>₹1,50,000 – ₹4,00,000</option>
-                <option>₹4,00,000+</option>
-              </select>
-            </Field>
-
-            <Field label="What are you looking to build?" error={errors.message?.message}>
-              <textarea
-                {...register('message')}
-                rows={5}
-                className={`${inputBase} resize-y`}
-                placeholder="A short description of the project, who it's for, and any deadline you have in mind."
-              />
-            </Field>
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full rounded-full bg-ink py-[18px] text-sm font-semibold text-paper
-                         transition duration-300 hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {submitting ? 'Sending…' : 'Send message'}
-            </button>
-
-            {result ? (
-              <p
-                role="status"
-                className={`text-center text-sm ${result.ok ? 'text-accent2' : 'text-red-600'}`}
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full rounded-full bg-ink py-[18px] text-sm font-semibold text-paper
+                           transition duration-300 hover:bg-accent
+                           disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {result.message}
-              </p>
-            ) : null}
+                {submitting ? 'Sending…' : 'Send message'}
+              </button>
+
+              {result ? (
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className={`text-center text-sm ${result.ok ? 'text-accent2' : 'text-red-600'}`}
+                >
+                  {result.message}
+                </p>
+              ) : (
+                <p className="text-center text-[13px] text-muted">
+                  Prefer email? Write to{' '}
+                  <a href={`mailto:${CONTACT_EMAIL}`} className="text-ink underline">
+                    {CONTACT_EMAIL}
+                  </a>
+                </p>
+              )}
+            </div>
           </form>
         </div>
       </div>

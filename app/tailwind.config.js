@@ -28,6 +28,8 @@ export default {
         tick: 'tick 34s linear infinite',
         pulseDot: 'pulseDot 2.2s infinite',
         cellIn: 'cellIn .5s cubic-bezier(.16,1,.3,1) both',
+        popIn: 'popIn .5s cubic-bezier(.16,1,.3,1) both',
+        checkDraw: 'checkDraw .6s cubic-bezier(.16,1,.3,1) .15s both',
       },
       keyframes: {
         tick: {
@@ -40,6 +42,13 @@ export default {
         cellIn: {
           from: { opacity: '0', transform: 'translateY(14px)' },
           to: { opacity: '1', transform: 'none' },
+        },
+        popIn: {
+          from: { opacity: '0', transform: 'scale(0.8)' },
+          to: { opacity: '1', transform: 'scale(1)' },
+        },
+        checkDraw: {
+          to: { strokeDashoffset: '0' },
         },
       },
     },

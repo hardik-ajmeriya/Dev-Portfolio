@@ -44,6 +44,6 @@ export const faqs = [
   },
   {
     q: 'Do you work with clients remotely?',
-    a: 'Yes, entirely remotely, and with clients in any timezone. Communication is over email and scheduled calls, with regular written updates. I reply to enquiries within 48 hours.',
+    a: 'Yes, entirely remotely, and with clients in any timezone. Communication is over email and scheduled calls, with regular written updates. I reply to enquiries within 24 hours, Monday to Saturday.',
   },
 ];
