@@ -150,9 +150,10 @@ If it prints blockers, stop. That is the script's entire purpose.
 cd app/worker
 node index.test.mjs && node admin.test.mjs && node rateLimit.test.mjs
 cd ../.. && node coming-soon/countdown.test.mjs
+node scripts/schema.test.mjs
 node scripts/check-design-leak.mjs
 ```
-Expect 15 + 42 + 14 + 18 = **89 passing**, and no design leaks.
+Expect 15 + 42 + 14 + 18 + 18 = **107 passing**, and no design leaks.
 
 ### 3. Deploy the Worker
 
@@ -200,13 +201,20 @@ database with it.
 Then, in a browser: submit the contact form **for real**, from the live domain,
 and confirm both emails arrive.
 
-### 6. Search Console — same day
+### 6. Search Console and Bing — same day
 
 - Add `hardikajmeriya.com`, verify by **DNS**.
 - Submit `https://hardikajmeriya.com/sitemap.xml`.
 - **URL Inspection → Request indexing** on the homepage. This is what turns
   "eventually" into "within a day or two".
 - Test the rich results: <https://search.google.com/test/rich-results>
+  The graph is now 12 linked nodes — confirm Google reads the Person,
+  ProfessionalService, FAQ, HowTo and the four project nodes.
+- **Bing Webmaster Tools** too, ten minutes. `bingbot` is allowed in
+  robots.txt, but allowing a crawler is not the same as telling it you exist,
+  and Bing is what feeds Copilot.
+
+See `SEO-AUDIT.md` for the full picture and the six-month plan.
 
 ### 7. Share — 14:00 IST
 
