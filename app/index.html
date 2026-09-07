@@ -35,6 +35,15 @@
     />
     <meta name="author" content="Hardik Ajmeriya" />
     <link rel="canonical" href="https://hardikajmeriya.com/" />
+
+    <!--
+      Points AI agents at the plain-text summary. /llms.txt is a convention
+      rather than a registered standard, so without a link here or the note in
+      robots.txt the file is only found by crawlers that happen to guess the
+      path — which meant the most AI-legible asset on the site was effectively
+      invisible to the systems it was written for.
+    -->
+    <link rel="alternate" type="text/plain" href="/llms.txt" title="Plain-text summary for AI assistants" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 
     <meta property="og:type" content="profile" />
@@ -46,6 +55,11 @@
       content="MERN applications built end-to-end and deployed to production on AWS. Available for freelance projects."
     />
     <meta property="og:locale" content="en_IN" />
+    <!-- og:type is "profile", which defines these three. Declaring the type
+         without them leaves the object half-specified. -->
+    <meta property="profile:first_name" content="Hardik" />
+    <meta property="profile:last_name" content="Ajmeriya" />
+    <meta property="profile:username" content="hardik-ajmeriya" />
     <!--
       A purpose-built 1200x630 card, not the hero portrait.
 
@@ -77,134 +91,6 @@
     />
 
     <!--
-      Structured data. This is the highest-value thing on the page for AI
-      search: it states plainly who you are, what you do and what you offer,
-      in a format models and search engines parse directly rather than infer.
-
-      `sameAs` is what ties this domain to your other profiles and is the main
-      signal for ranking your own name. Every URL here must resolve — a 404 in
-      sameAs weakens the entity rather than strengthening it, which is why the
-      x.com placeholder was removed instead of left in. Add X/Instagram back
-      only once the real handles exist.
-    -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "ProfilePage",
-        "url": "https://hardikajmeriya.com/",
-        "mainEntity": {
-          "@type": "Person",
-          "@id": "https://hardikajmeriya.com/#hardik",
-          "name": "Hardik Ajmeriya",
-          "givenName": "Hardik",
-          "familyName": "Ajmeriya",
-          "url": "https://hardikajmeriya.com/",
-          "email": "mailto:hardik.ajmeriya89@gmail.com",
-          "jobTitle": "Full-Stack Developer & Cloud Engineer",
-          "address": {
-            "@type": "PostalAddress",
-            "addressLocality": "Rajkot",
-            "addressRegion": "Gujarat",
-            "addressCountry": "IN"
-          },
-          "description": "Full-stack developer who builds MERN applications and deploys them to production on AWS with Docker, Kubernetes, Terraform and CI/CD pipelines.",
-          "knowsAbout": [
-            "MERN stack development",
-            "React",
-            "Node.js",
-            "Express.js",
-            "MongoDB",
-            "Next.js",
-            "JavaScript",
-            "TypeScript",
-            "REST API development",
-            "AWS",
-            "Amazon EKS",
-            "Docker",
-            "Kubernetes",
-            "Terraform",
-            "CI/CD pipelines",
-            "GitHub Actions",
-            "Jenkins",
-            "Argo CD",
-            "GitOps",
-            "Prometheus",
-            "Grafana",
-            "DevOps",
-            "Cloud infrastructure",
-            "Web application deployment",
-            "SaaS development",
-            "Multi-tenant architecture",
-            "Subscription billing",
-            "Stripe integration"
-          ],
-          "sameAs": [
-            "https://github.com/hardik-ajmeriya",
-            "https://www.linkedin.com/in/hardik-ajmeriya"
-          ],
-          "makesOffer": [
-            {
-              "@type": "Offer",
-              "itemOffered": {
-                "@type": "Service",
-                "name": "Full-Stack Web Application Development",
-                "description": "Custom web applications built on MongoDB, Express, React and Node — client portals, dashboards, storefronts and internal tools."
-              }
-            },
-            {
-              "@type": "Offer",
-              "itemOffered": {
-                "@type": "Service",
-                "name": "SaaS Product Development",
-                "description": "Subscription products built end to end — multi-tenant architecture, authentication and roles, billing, an admin dashboard, and the infrastructure to run it."
-              }
-            },
-            {
-              "@type": "Offer",
-              "itemOffered": {
-                "@type": "Service",
-                "name": "API Development & Integration",
-                "description": "REST APIs designed, documented and secured, plus integration of payments, authentication and third-party services."
-              }
-            },
-            {
-              "@type": "Offer",
-              "itemOffered": {
-                "@type": "Service",
-                "name": "Cloud Deployment & Infrastructure",
-                "description": "Applications provisioned and deployed on AWS with SSL, domains and environment separation handled."
-              }
-            },
-            {
-              "@type": "Offer",
-              "itemOffered": {
-                "@type": "Service",
-                "name": "CI/CD Pipeline Automation",
-                "description": "Automated build, test and deploy pipelines with rollback paths, using GitHub Actions, Jenkins and Argo CD."
-              }
-            },
-            {
-              "@type": "Offer",
-              "itemOffered": {
-                "@type": "Service",
-                "name": "Containerisation & Kubernetes",
-                "description": "Services packaged into Docker images and orchestrated on Kubernetes so applications scale under load."
-              }
-            },
-            {
-              "@type": "Offer",
-              "itemOffered": {
-                "@type": "Service",
-                "name": "Monitoring, Maintenance & Support",
-                "description": "Dashboards and alerting with Prometheus and Grafana, plus ongoing fixes and infrastructure care after handover."
-              }
-            }
-          ]
-        }
-      }
-    </script>
-
-    <!--
       Fonts are self-hosted (see src/index.css). They used to be loaded from
       fonts.googleapis.com, which put a third-party stylesheet on the critical
       path in front of the largest text on the page, and required two
@@ -215,97 +101,23 @@
       prerender.js injects <link rel="preload"> tags for the two fonts the
       first screen actually needs, using the hashed filenames from the build.
     -->
-
     <!--
-      WebSite entity. `alternateName` helps search engines connect variations
-      of the name to this site.
-    -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "url": "https://hardikajmeriya.com/",
-        "name": "Hardik Ajmeriya",
-        "alternateName": [
-          "Hardik Ajmeriya Portfolio",
-          "Hardik Ajmeriya — Full-Stack Developer"
-        ],
-        "inLanguage": "en",
-        "publisher": {
-          "@id": "https://hardikajmeriya.com/#hardik"
-        }
-      }
-    </script>
+      STRUCTURED DATA IS NOT HERE.
 
-    <!--
-      FAQPage. Generated from src/data/faq.js — if you edit the questions
-      there, regenerate this block. Google requires structured data to match
-      the visible page text, and mismatches can cost you the rich result.
+      It is generated at build time by scripts/build-schema.mjs and injected
+      by prerender.js, derived from the same files the page renders from:
+      faq.js, projects.js, services.js, tech.js and seo.js.
+
+      It used to be three hand-written blocks in this file. They matched the
+      page — I verified it — but only because nobody had edited an answer yet.
+      The moment someone reworded an FAQ in faq.js and forgot to update the
+      copy here, Google would see structured data contradicting the visible
+      text, and the documented penalty is losing the rich result for the whole
+      page rather than the single question.
+
+      To change what the schema says, change the data file. There is nothing
+      to keep in sync.
     -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": "What kind of projects do you take on?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Web applications built on the MERN stack — React, Node.js, Express and MongoDB. Typically client portals, admin dashboards, storefronts, booking systems and internal business tools. I also take on the cloud side: deploying to AWS, setting up CI/CD pipelines, containerising with Docker and Kubernetes, and putting monitoring in place."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "What makes you different from other freelance developers?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Most freelance developers hand over a repository and stop there, which leaves you to work out hosting, deployment and monitoring on your own. I do both halves — the application and the infrastructure it runs on. You get a deployed, monitored, running system rather than code you still need someone else to launch."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "How do you price a project?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Fixed price, agreed before any work starts. After a free twenty-minute discovery call I send a written breakdown of scope, timeline and cost. If the scope changes later we agree the change first, so there are no surprise invoices. I do not bill hourly for defined projects."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "How long does a project usually take?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "It depends entirely on scope, so I give a specific timeline in the written quote rather than a generic estimate. A focused MVP is usually a few weeks; a larger application with integrations and custom infrastructure takes longer. You will have a staging URL to click through throughout, so progress is visible rather than something you take on trust."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Can you take over a project someone else started?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes. Inheriting an existing codebase is common, whether the previous developer left, the project stalled, or it works locally but was never deployed. I will review what exists and tell you honestly whether it is better to continue with it or rebuild — including when continuing is the cheaper answer."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "What happens after the project launches?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "The application goes live on production infrastructure with monitoring and alerting configured, so problems surface before your customers report them. I stay available afterwards for bug fixes, new features and infrastructure maintenance. You are not handed a system and left alone with it."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Do you work with clients remotely?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes, entirely remotely, and with clients in any timezone. Communication is over email and scheduled calls, with regular written updates. I reply to enquiries within 24 hours, Monday to Saturday."
-            }
-          }
-        ]
-      }
-    </script>
   </head>
   <body>
     <div id="root"></div>

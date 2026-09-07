@@ -45,6 +45,26 @@ if (!appHtml || appHtml.length < 500) {
 let output = template.replace(PLACEHOLDER, `<div id="root">${appHtml}</div>`);
 
 /*
+ * Inject the structured data, generated from the same data files the page was
+ * just rendered from. See scripts/build-schema.mjs for why it is derived
+ * rather than written by hand in index.html.
+ */
+const { schemaScriptTag, buildSchema } = await import('../scripts/build-schema.mjs');
+const schema = buildSchema();
+const schemaTag = schemaScriptTag();
+
+if (!schemaTag.includes('"@graph"')) {
+  fail('schema generation produced no @graph — structured data would ship empty.');
+}
+output = output.replace('</head>', `  ${schemaTag}\n  </head>`);
+
+const nodeTypes = schema['@graph'].map((n) =>
+  Array.isArray(n['@type']) ? n['@type'].join('+') : n['@type']
+);
+console.log(`[prerender] structured data: ${schema['@graph'].length} linked nodes`);
+console.log(`[prerender]   ${nodeTypes.join(', ')}`);
+
+/*
  * Preload the two fonts the first screen actually needs: Bricolage 800 (the
  * h1, which is the LCP element) and Inter 400 (all body copy).
  *

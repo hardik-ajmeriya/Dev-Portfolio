@@ -69,3 +69,9 @@ User-agent: CCBot
 Allow: /
 
 Sitemap: https://hardikajmeriya.com/sitemap.xml
+
+# A plain-language summary of who Hardik is and what he does, written for
+# language models rather than for ranking. Listed here because /llms.txt is a
+# convention, not a standard — an agent that does not already probe for it has
+# no other way to find the file.
+# https://hardikajmeriya.com/llms.txt
