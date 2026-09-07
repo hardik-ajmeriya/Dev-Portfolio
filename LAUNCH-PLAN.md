@@ -94,6 +94,25 @@ production.
    Check the auto-reply is not in spam. If it is, the domain is not properly
    verified — fix that before launch, not after.
 
+### The countdown
+
+`hardikajmeriya.com` now shows a live countdown to **15 Sept, 14:00 IST**, in
+each visitor's own timezone. Two things about it worth knowing:
+
+- **If you move the date**, edit `TARGET` at the top of
+  `coming-soon/public/countdown.js` and redeploy the coming-soon Worker.
+  `scripts/preflight.mjs` fails if the target has gone stale.
+- **If you slip past Tuesday**, it handles itself. For 24 hours it says
+  "Launching — today"; after that the whole block hides and the page looks
+  exactly as it did before. A timer frozen at 00:00:00 advertises a missed
+  deadline to every visitor, so it removes itself rather than doing that.
+
+Deploy it now so it is counting while people can still see it:
+
+```bash
+cd coming-soon && npx wrangler deploy
+```
+
 ### Sat 13 – Sun 14 · Review, and one last pass
 
 - Open `admin.hardikajmeriya.com` on your **phone**, on mobile data. Read the
@@ -130,8 +149,10 @@ If it prints blockers, stop. That is the script's entire purpose.
 ```bash
 cd app/worker
 node index.test.mjs && node admin.test.mjs && node rateLimit.test.mjs
+cd ../.. && node coming-soon/countdown.test.mjs
+node scripts/check-design-leak.mjs
 ```
-Expect 15 + 42 + 14 = **71 passing**.
+Expect 15 + 42 + 14 + 18 = **89 passing**, and no design leaks.
 
 ### 3. Deploy the Worker
 

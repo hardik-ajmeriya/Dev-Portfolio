@@ -150,6 +150,19 @@ check('BLOCKER', 'No secrets committed to the build', () =>
   'something that looks like an API key is in dist/index.html'
 );
 
+check('BLOCKER', 'Coming-soon countdown matches the launch date', () => {
+  const p = path.join(ROOT, 'coming-soon/public/countdown.js');
+  if (!exists(p)) return true;                       // no countdown, nothing to go stale
+  const m = read(p).match(/Date\.UTC\(([^)]*)\)/);
+  if (!m) return 'could not read the countdown target';
+  const [y, mo, d, h, mi] = m[1].split(',').map((n) => parseInt(n.trim(), 10));
+  const target = Date.UTC(y, mo, d, h, mi || 0);
+  const days = (target - Date.now()) / 86400000;
+  if (days < -1) return `countdown target passed ${Math.abs(Math.round(days))} days ago`;
+  if (days > 60) return `countdown target is ${Math.round(days)} days out — is that right?`;
+  return true;
+});
+
 // ------------------------------------------------------------------- WARN
 
 check('WARN', 'All liveUrl fields filled', () => {

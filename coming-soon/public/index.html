@@ -62,6 +62,33 @@
 
   <div class="shadow" aria-hidden="true"></div>
 
+  <!--
+    Countdown. Deliberately outside .swing: the sign moves, and digits that
+    move with it are unpleasant to read. A still counter under a swinging
+    board also reads better than two things moving at once.
+
+    Progressive enhancement — the launch date is in the HTML, so this is
+    readable with JavaScript off or blocked. countdown.js reveals the digits
+    and rewrites the date line into the visitor's own timezone.
+  -->
+  <section class="cd" id="cd">
+    <p class="cd-lead" id="cdLead">Launching</p>
+
+    <!--
+      aria-hidden on the digits, on purpose. A screen reader announcing a
+      changing number once a second is unusable. The date line below is the
+      accessible version and says the same thing, once.
+    -->
+    <ol class="cd-grid" id="cdGrid" aria-hidden="true" hidden>
+      <li><span class="cd-num" id="cdD">--</span><span class="cd-lab">Days</span></li>
+      <li><span class="cd-num" id="cdH">--</span><span class="cd-lab">Hours</span></li>
+      <li><span class="cd-num" id="cdM">--</span><span class="cd-lab">Minutes</span></li>
+      <li><span class="cd-num" id="cdS">--</span><span class="cd-lab">Seconds</span></li>
+    </ol>
+
+    <p class="cd-when" id="cdWhen">Tuesday, 15 September 2026 &middot; 14:00 IST</p>
+  </section>
+
   <div class="spacer"></div>
 
   <footer>
@@ -73,5 +100,6 @@
 <div class="vig" aria-hidden="true"></div>
 
 <script src="sign.js" defer></script>
+<script src="countdown.js" defer></script>
 </body>
 </html>
