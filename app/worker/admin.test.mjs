@@ -261,6 +261,28 @@ await t('preview host with a token for another user -> 403', async()=>{
   const r = await mod.fetch(preview('/',{headers: await tokenHeaders({email:'someone@else.com'})}), env);
   eq(r.status,403,'status');
 });
+await t('www redirects to the apex with a 301, NOT an Access login', async()=>{
+  // The launch-day trap: www is attached as a custom domain, PUBLIC_HOST is
+  // the apex only, so without an explicit rule www falls into the private-host
+  // branch and every visitor gets a 401 instead of the site.
+  const r = await mod.fetch(new Request('https://www.hardikajmeriya.com/'), env);
+  eq(r.status,301,'status');
+  eq(r.headers.get('location'),'https://hardikajmeriya.com/','location');
+});
+await t('www redirect preserves the path and query string', async()=>{
+  // No '#fragment' in this URL on purpose: a browser never sends one to the
+  // server, so asserting on it would be testing a situation that cannot occur.
+  const r = await mod.fetch(new Request('https://www.hardikajmeriya.com/x?a=1&b=2'), env);
+  eq(r.headers.get('location'),'https://hardikajmeriya.com/x?a=1&b=2','location');
+});
+await t('a lookalike host is NOT treated as www and stays gated', async()=>{
+  // wwwXhardikajmeriya.com and www.hardikajmeriya.com.evil.com must not match.
+  for (const h of ['https://wwwhardikajmeriya.com/','https://www.hardikajmeriya.com.evil.com/']) {
+    const r = await mod.fetch(new Request(h), env);
+    if (r.status === 301) throw new Error('redirected a lookalike host: '+h);
+    eq(r.status,401,'status for '+h);
+  }
+});
 await t('the PUBLIC host is unaffected — no token needed', async()=>{
   const r = await mod.fetch(req('/'), env);
   eq(r.status,200,'status');

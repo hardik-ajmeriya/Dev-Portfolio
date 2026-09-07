@@ -162,6 +162,22 @@ export default {
     // token. Same fail-closed principle already used for /admin.
     const host = url.hostname;
     const isLocalHost = host === 'localhost' || host === '127.0.0.1';
+
+    // ---- www -> apex, before anything else ------------------------------
+    //
+    // www.hardikajmeriya.com is attached as a custom domain alongside the
+    // apex. Without this it would fall through to the private-host gate
+    // below — PUBLIC_HOST is the apex only — and every visitor who typed
+    // "www." would be shown a Cloudflare Access login instead of the site.
+    //
+    // A 301 rather than serving both: the canonical tag, the sitemap and
+    // every JSON-LD url already name the apex, so answering on two hostnames
+    // would split the signals for the one search term that matters most.
+    if (env.PUBLIC_HOST && host === `www.${env.PUBLIC_HOST}`) {
+      url.hostname = env.PUBLIC_HOST;
+      return Response.redirect(url.toString(), 301);
+    }
+
     const isPrivateHost = !isLocalHost && !!env.PUBLIC_HOST && host !== env.PUBLIC_HOST;
 
     if (isPrivateHost) {

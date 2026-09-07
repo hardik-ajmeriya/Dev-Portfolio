@@ -243,7 +243,20 @@ npm run cf:tail      # live request logs
 
 ## 6. Launch — swap the domain to the real site
 
-Once the real site checks out on its workers.dev URL:
+> **See `LAUNCH-PLAN.md` for the full runbook**, including the preflight script,
+> the D1 migration and the post-launch verification. This section is the domain
+> swap only.
+
+Before you touch the domain:
+
+```bash
+cd app && npm run build
+cd .. && node scripts/preflight.mjs      # must exit 0
+cd app && npx wrangler d1 migrations apply hardik-enquiries --remote
+npm run deploy
+```
+
+Then:
 
 1. **Detach** the domain from the coming-soon Worker:
    `hardik-coming-soon` → Settings → Domains & Routes → remove
@@ -258,6 +271,16 @@ adding before removing will just error. There is a brief gap between the two
 steps where the domain does not resolve to anything — it is seconds, and no one
 is watching yet.
 
+**Attach `www` as well, not only the apex.** The Worker 301-redirects
+`www.hardikajmeriya.com` to the apex, but only for requests that actually reach
+it. If www is left pointing at the removed coming-soon Worker, anyone who types
+"www." gets an error page instead of the site.
+
+The redirect also exists for a second reason worth knowing: `PUBLIC_HOST` is the
+apex alone, and every other hostname this Worker answers on is treated as a
+private preview and gated behind Cloudflare Access. Without the explicit www
+rule, www would fall into that branch and show visitors a login screen.
+
 3. **Undo the noindex.** The coming-soon page deliberately blocks search
    engines. Once the real site is on the domain, make sure it is *not* carrying
    those rules — the real site has no `robots.txt` and no robots meta tag, so
@@ -270,9 +293,18 @@ again (a maintenance page, for instance).
 
 `app/public/_headers` already carries the same protections for the real site,
 with a CSP loosened only where it's actually needed — Devicon logos from
-`cdn.jsdelivr.net`, Cloudflare Web Analytics, and Google Fonts. The contact form
-posts same-origin to `/api/enquiry`, so no third-party form endpoint needs an
-allowance there.
+`cdn.jsdelivr.net` and Cloudflare Web Analytics. Fonts are self-hosted, so
+`fonts.googleapis.com` and `fonts.gstatic.com` are no longer trusted at all. The
+contact form posts same-origin to `/api/enquiry`, so no third-party form
+endpoint needs an allowance there.
+
+**After the swap, confirm the admin did not go public with the site:**
+
+```powershell
+curl.exe -s -o NUL -w "%{http_code}`n" https://admin.hardikajmeriya.com/api/admin/enquiries
+```
+
+Must be 401 or 302. If it returns 200, stop and take the domain back down.
 
 ---
 
