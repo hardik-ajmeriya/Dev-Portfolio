@@ -185,6 +185,33 @@ export default {
       if (!auth.ok) return auth.response;
     }
 
+    // ---- /resume ---------------------------------------------------------
+    //
+    // The CV shipped as /DevOps_V1.2.pdf and was linked from nowhere at all:
+    // no href on the page, not in the sitemap, not in llms.txt. An asset
+    // nothing points at is not crawlable, so it may as well not have been
+    // deployed. The filename also said nothing about whose CV it is, which
+    // matters when it is the file a recruiter saves to disk.
+    //
+    // Served at a clean /resume rather than redirected to the .pdf, so the
+    // indexable URL is the readable one. This is also the site's only second
+    // URL, which is the beginning of any answer to "why are there no
+    // sitelinks" — see SEO_TODO.md.
+    if (url.pathname === '/resume' || url.pathname === '/resume/') {
+      const pdf = await env.ASSETS.fetch(
+        new Request(`${url.origin}/hardik-ajmeriya-resume.pdf`, request)
+      );
+      if (!pdf.ok) return pdf;
+      const headers = new Headers(pdf.headers);
+      headers.set('content-type', 'application/pdf');
+      // inline, not attachment: a recruiter should be able to read it in the
+      // browser without a download, and Google indexes PDF text either way.
+      headers.set('content-disposition', 'inline; filename="hardik-ajmeriya-resume.pdf"');
+      headers.set('cache-control', 'public, max-age=86400');
+      headers.set('x-robots-tag', 'index, follow');
+      return new Response(pdf.body, { status: 200, headers });
+    }
+
     // ---- Admin, behind Cloudflare Access -------------------------------
     // Access authenticates at the edge before the request reaches here; the
     // checks inside are defence in depth, not the primary control.

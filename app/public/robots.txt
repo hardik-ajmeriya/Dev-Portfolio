@@ -75,3 +75,4 @@ Sitemap: https://hardikajmeriya.com/sitemap.xml
 # convention, not a standard — an agent that does not already probe for it has
 # no other way to find the file.
 # https://hardikajmeriya.com/llms.txt
+# https://hardikajmeriya.com/humans.txt

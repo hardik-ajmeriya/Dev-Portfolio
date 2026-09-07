@@ -1,6 +1,10 @@
 import { CONTACT_EMAIL } from './sections/Contact';
 
 const socials = [
+  /* Internal first: /resume was previously reachable only by guessing the
+     old /DevOps_V1.2.pdf filename, so nothing crawled it and no visitor
+     found it. A link here makes it part of the site rather than an orphan. */
+  { label: 'Résumé', href: '/resume' },
   { label: 'GitHub', href: 'https://github.com/hardik-ajmeriya' },
   { label: 'LinkedIn', href: 'https://www.linkedin.com/in/hardik-ajmeriya' },
   { label: 'Email', href: `mailto:${CONTACT_EMAIL}` },

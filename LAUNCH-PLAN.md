@@ -153,7 +153,7 @@ cd ../.. && node coming-soon/countdown.test.mjs
 node scripts/schema.test.mjs
 node scripts/check-design-leak.mjs
 ```
-Expect 15 + 42 + 14 + 18 + 18 = **107 passing**, and no design leaks.
+Expect 15 + 47 + 14 + 18 + 25 = **119 passing**, and no design leaks.
 
 ### 3. Deploy the Worker
 
@@ -214,7 +214,9 @@ and confirm both emails arrive.
   robots.txt, but allowing a crawler is not the same as telling it you exist,
   and Bing is what feeds Copilot.
 
-See `SEO-AUDIT.md` for the full picture and the six-month plan.
+See `SEO-AUDIT.md` for the full picture, `SEO_TODO.md` for the launch-day
+checklist (Search Console, Bing, GitHub profile, one email address) and
+`SEO_SCORE.md` for where each area stands.
 
 ### 7. Share — 14:00 IST
 

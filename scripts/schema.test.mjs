@@ -229,5 +229,68 @@ t('areaServed does not contradict the page copy', () => {
 });
 
 console.log();
+console.log('=== ADDED FOR ENTITY / BRAND SEO ===');
+
+t('Person has contactPoint, identifier and subjectOf', () => {
+  const p = find('Person')[0];
+  for (const k of ['contactPoint', 'identifier', 'subjectOf', 'worksFor', 'hasOccupation']) {
+    if (!p[k]) throw new Error('Person is missing ' + k);
+  }
+});
+
+t('the CV is a real node with a clean URL', () => {
+  const cv = find('DigitalDocument')[0];
+  if (!cv) throw new Error('no DigitalDocument for the CV');
+  eq(cv.url, 'https://hardikajmeriya.com/resume', 'url');
+  eq(cv.encodingFormat, 'application/pdf', 'format');
+  if (!JSON.stringify(cv).includes(find('Person')[0]['@id'])) throw new Error('CV is not linked to the Person');
+});
+
+t('the business has a square logo distinct from the OG image', () => {
+  const b = find('ProfessionalService')[0];
+  if (!b.logo) throw new Error('no logo');
+  eq(b.logo.width, b.logo.height, 'logo must be square');
+  if (b.logo.url === b.image) throw new Error('logo and image are the same asset');
+});
+
+console.log();
+console.log('=== NO FAKE MARKUP ===');
+
+t('NO SearchAction — the site has no search endpoint', () => {
+  // Requested, and deliberately refused. The sitelinks search box requires a
+  // working search URL; declaring one the site cannot serve is markup for a
+  // feature that does not exist.
+  if (JSON.stringify(graph).includes('SearchAction')) {
+    throw new Error('SearchAction declared without a search endpoint');
+  }
+});
+
+t('NO BreadcrumbList — one page, no hierarchy to describe', () => {
+  if (JSON.stringify(graph).includes('BreadcrumbList')) {
+    throw new Error('breadcrumbs on a single-page site describe a trail that does not exist');
+  }
+});
+
+t('no aggregateRating, review or award without a source', () => {
+  const json = JSON.stringify(graph);
+  for (const t of ['aggregateRating', '"Review"', '"award"']) {
+    if (json.includes(t)) throw new Error(`${t} present with nothing real behind it`);
+  }
+});
+
+t('no empty or placeholder property values anywhere', () => {
+  const bad = [];
+  const walk = (n, at) => {
+    if (Array.isArray(n)) return n.forEach((x, i) => walk(x, `${at}[${i}]`));
+    if (n && typeof n === 'object') return Object.entries(n).forEach(([k, v]) => walk(v, `${at}.${k}`));
+    if (typeof n === 'string' && (n.trim() === '' || /TODO|TBD|REPLACE|example\.com|your-/i.test(n))) {
+      bad.push(`${at} = ${JSON.stringify(n)}`);
+    }
+  };
+  graph.forEach((n) => walk(n, typeOf(n)[0]));
+  if (bad.length) throw new Error(bad.join('; '));
+});
+
+console.log();
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -60,8 +60,16 @@
 /images/*
   Cache-Control: public, max-age=86400
 
-# The resume had no cache policy at all, so it was revalidated on every view.
-/DevOps_V1.2.pdf
+# The CV, at both its file path and the clean /resume URL the Worker serves.
+/hardik-ajmeriya-resume.pdf
+  Cache-Control: public, max-age=86400
+
+/llms.txt
+  Content-Type: text/plain; charset=utf-8
+  Cache-Control: public, max-age=86400
+
+/humans.txt
+  Content-Type: text/plain; charset=utf-8
   Cache-Control: public, max-age=86400
 
 # The 404 page must never be cached as though it were a real page.

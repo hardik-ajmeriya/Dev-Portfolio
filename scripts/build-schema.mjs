@@ -69,11 +69,43 @@ export function buildSchema() {
         '@type': 'City',
         name: `${PERSON.address.locality}, ${PERSON.address.region}, India`,
       },
-      skills: [...new Set(technologies.map((t) => t.name))].join(', '),
+      /* No `skills` here: it was the knowsAbout list joined into a string,
+       * i.e. the same 31 items serialised twice in one document. knowsAbout
+       * is the property search engines actually read for topical expertise. */
     },
     sameAs: PERSON.sameAs,
     mainEntityOfPage: { '@id': `${SITE_URL}/#webpage` },
     worksFor: { '@id': BUSINESS_ID },
+    /* The domain is the entity's canonical identifier. For a personal brand
+     * with an exact-match domain this is the strongest disambiguator
+     * available — there is no ORCID, VIAF or Wikidata ID to point at yet. */
+    identifier: {
+      '@type': 'PropertyValue',
+      propertyID: 'website',
+      value: SITE_URL,
+    },
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'Business enquiries',
+      email: `mailto:${PERSON.email}`,
+      url: `${SITE_URL}/#contact`,
+      availableLanguage: BUSINESS.availableLanguage,
+      areaServed: 'Worldwide',
+    },
+    /* The CV, as a real document with a stable URL rather than an orphan PDF.
+     * subjectOf is the correct relation: the document is about the person. */
+    subjectOf: { '@id': `${SITE_URL}/#resume` },
+  };
+
+  const resume = {
+    '@type': 'DigitalDocument',
+    '@id': `${SITE_URL}/#resume`,
+    name: `${PERSON.name} — CV`,
+    url: `${SITE_URL}/resume`,
+    encodingFormat: 'application/pdf',
+    about: { '@id': PERSON_ID },
+    author: { '@id': PERSON_ID },
+    inLanguage: 'en',
   };
 
   // ---- The business ------------------------------------------------------
@@ -83,6 +115,14 @@ export function buildSchema() {
     name: BUSINESS.name,
     url: `${SITE_URL}/`,
     image: `${SITE_URL}/images/og-card.png`,
+    /* The brand mark, square and on an opaque background — the shape Google
+     * expects for a logo. Distinct from `image`, which is the wide OG card. */
+    logo: {
+      '@type': 'ImageObject',
+      url: `${SITE_URL}/android-chrome-512x512.png`,
+      width: 512,
+      height: 512,
+    },
     email: `mailto:${PERSON.email}`,
     description: PERSON.description,
     founder: { '@id': PERSON_ID },
@@ -104,6 +144,11 @@ export function buildSchema() {
     hasOfferCatalog: {
       '@type': 'OfferCatalog',
       name: 'Development and infrastructure services',
+      /* areaServed is declared ONCE on the parent ProfessionalService and not
+       * repeated per service. Repeating eight Country objects across seven
+       * offers added ~3.5 KB of JSON-LD that said nothing the provider had
+       * not already said — the offers reference the provider by @id, so a
+       * consumer follows the link rather than needing a copy. */
       itemListElement: services.map((s) => ({
         '@type': 'Offer',
         itemOffered: {
@@ -112,7 +157,6 @@ export function buildSchema() {
           description: plain(s.description),
           serviceType: plain(s.title.replace(/\n/g, ' ')),
           provider: { '@id': BUSINESS_ID },
-          areaServed: BUSINESS.areaServed.map((c) => ({ '@type': 'Country', name: c })),
         },
       })),
     },
@@ -209,7 +253,23 @@ export function buildSchema() {
     about: { '@id': PERSON_ID },
     mainEntity: { '@id': PERSON_ID },
     primaryImageOfPage: { '@id': `${SITE_URL}/#ogimage` },
+    significantLink: [`${SITE_URL}/resume`],
     inLanguage: 'en',
+    /*
+     * NOT ADDED, deliberately:
+     *
+     *   potentialAction / SearchAction — the sitelinks search box requires a
+     *   working search endpoint on the site. There is no search. Declaring
+     *   one would be markup describing a feature that does not exist, which
+     *   is the definition of the spam Google's structured-data guidelines
+     *   prohibit, and it would be ignored at best.
+     *
+     *   BreadcrumbList — breadcrumbs describe a position in a hierarchy. This
+     *   site is one page; there is no hierarchy to describe. Marking up a
+     *   fake trail would misrepresent the structure.
+     *
+     * Both become legitimate the moment real sub-pages exist. See SEO_TODO.md.
+     */
   };
 
   const website = {
@@ -239,6 +299,7 @@ export function buildSchema() {
       webPage,
       ogImage,
       person,
+      resume,
       business,
       portfolio,
       ...projectNodes,

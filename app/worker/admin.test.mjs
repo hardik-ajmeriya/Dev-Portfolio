@@ -290,6 +290,35 @@ await t('the PUBLIC host is unaffected — no token needed', async()=>{
 });
 
 console.log();
+console.log('=== /resume (the site\'s only second indexable URL) ===');
+const pdfEnv = {...env, ASSETS:{ fetch: async (r) => new URL(r.url).pathname === '/hardik-ajmeriya-resume.pdf'
+  ? new Response('%PDF-1.4 fake', {status:200, headers:{'content-type':'application/octet-stream'}})
+  : new Response('not found', {status:404}) }};
+
+await t('/resume serves the PDF with a 200, not a redirect', async()=>{
+  const r = await mod.fetch(new Request('https://hardikajmeriya.com/resume'), pdfEnv);
+  eq(r.status,200,'status');
+  eq(r.headers.get('content-type'),'application/pdf','content-type');
+});
+await t('/resume is inline, not a forced download', async()=>{
+  const r = await mod.fetch(new Request('https://hardikajmeriya.com/resume'), pdfEnv);
+  if(!/^inline/.test(r.headers.get('content-disposition')||'')) throw new Error('not inline');
+  if(!/hardik-ajmeriya-resume\.pdf/.test(r.headers.get('content-disposition'))) throw new Error('filename not descriptive');
+});
+await t('/resume is explicitly indexable', async()=>{
+  const r = await mod.fetch(new Request('https://hardikajmeriya.com/resume'), pdfEnv);
+  if(!/index/.test(r.headers.get('x-robots-tag')||'')) throw new Error('missing index directive');
+});
+await t('/resume/ with a trailing slash works too', async()=>{
+  const r = await mod.fetch(new Request('https://hardikajmeriya.com/resume/'), pdfEnv);
+  eq(r.status,200,'status');
+});
+await t('/resume on the PRIVATE host is still gated', async()=>{
+  const r = await mod.fetch(new Request('https://admin.hardikajmeriya.com/resume'), pdfEnv);
+  eq(r.status,401,'status');
+});
+
+console.log();
 console.log('=== ROUTING CONFIG (a code-correct Worker is useless if unrouted) ===');
 await t('wrangler.jsonc sets PUBLIC_HOST', async()=>{
   const fs = await import('node:fs');

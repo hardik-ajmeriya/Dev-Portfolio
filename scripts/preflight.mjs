@@ -163,6 +163,31 @@ check('BLOCKER', 'Coming-soon countdown matches the launch date', () => {
   return true;
 });
 
+check('BLOCKER', 'The CV is present and linked', () => {
+  // It previously shipped as an orphan: deployed, but no href anywhere, so
+  // nothing could crawl it and no visitor could find it.
+  if (!exists(path.join(DIST, 'hardik-ajmeriya-resume.pdf'))) return 'resume PDF missing from the build';
+  if (!html.includes('href="/resume"')) return 'the CV is not linked from the page';
+  const sm = read(path.join(DIST, 'sitemap.xml'));
+  if (!sm.includes('/resume')) return '/resume is not in the sitemap';
+  return true;
+});
+
+check('BLOCKER', 'llms.txt and humans.txt are discoverable', () => {
+  const robots = read(path.join(DIST, 'robots.txt'));
+  const missing = ['llms.txt', 'humans.txt'].filter((f) => !exists(path.join(DIST, f)) || !robots.includes(f));
+  return missing.length === 0 || `absent or unreferenced: ${missing.join(', ')}`;
+});
+
+check('BLOCKER', 'No fake structured data', () => {
+  const m = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+  if (!m) return 'no JSON-LD in the build';
+  const json = m[1];
+  const banned = ['SearchAction', 'BreadcrumbList', 'aggregateRating', '"Review"'];
+  const found = banned.filter((b) => json.includes(b));
+  return found.length === 0 || `markup for things that do not exist: ${found.join(', ')}`;
+});
+
 // ------------------------------------------------------------------- WARN
 
 check('WARN', 'All liveUrl fields filled', () => {
