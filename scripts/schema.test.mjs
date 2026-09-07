@@ -20,7 +20,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildSchema } from './build-schema.mjs';
 import { faqs } from '../app/src/data/faq.js';
-import { projects } from '../app/src/data/projects.js';
+import { projects, projectImages } from '../app/src/data/projects.js';
 import { services } from '../app/src/data/services.js';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -251,6 +251,24 @@ t('the business has a square logo distinct from the OG image', () => {
   if (!b.logo) throw new Error('no logo');
   eq(b.logo.width, b.logo.height, 'logo must be square');
   if (b.logo.url === b.image) throw new Error('logo and image are the same asset');
+});
+
+t('every screenshot of every project is in the schema', () => {
+  for (const p of projects) {
+    const node = graph.find((n) => n.name === p.title);
+    const want = projectImages(p).map((i) => `https://hardikajmeriya.com${i.src}`);
+    eq(JSON.stringify(node.image), JSON.stringify(want), `${p.id} images`);
+  }
+});
+
+t('project images are always an array, even with one screenshot', () => {
+  // A bare string here would work for Google but break any consumer that
+  // assumes the shape is stable across projects.
+  for (const p of projects) {
+    const node = graph.find((n) => n.name === p.title);
+    if (!Array.isArray(node.image)) throw new Error(`${p.id} image is not an array`);
+    if (!node.image.length) throw new Error(`${p.id} has no image at all`);
+  }
 });
 
 console.log();

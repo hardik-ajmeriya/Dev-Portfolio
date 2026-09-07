@@ -27,7 +27,7 @@
 
 import { SITE_URL, PERSON_ID, SITE_ID, BUSINESS_ID, PERSON, BUSINESS } from '../app/src/data/seo.js';
 import { faqs } from '../app/src/data/faq.js';
-import { projects } from '../app/src/data/projects.js';
+import { projects, projectImages } from '../app/src/data/projects.js';
 import { services, processSteps } from '../app/src/data/services.js';
 import { technologies } from '../app/src/data/tech.js';
 
@@ -177,7 +177,12 @@ export function buildSchema() {
       '@id': `${SITE_URL}/#project-${p.id}`,
       name: plain(p.title),
       description: plain(p.description),
-      image: `${SITE_URL}${p.image}`,
+      /* schema.org `image` takes a list. Every screenshot goes in, not just
+       * the one that happens to be showing — an image a visitor can reach by
+       * clicking a thumbnail is part of the work, and Google Images has no
+       * way to find it otherwise. Uses the same projectImages() helper the
+       * gallery renders from, so the two cannot disagree. */
+      image: projectImages(p).map((img) => `${SITE_URL}${img.src}`),
       author: { '@id': PERSON_ID },
       creator: { '@id': PERSON_ID },
       position: i + 1,
