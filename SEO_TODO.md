@@ -29,7 +29,7 @@ Tick items off as you go — several of them block the others.
 ### 3. Rich Results Test — confirm the graph is read as intended
 
 - [ ] <https://search.google.com/test/rich-results> → test `https://hardikajmeriya.com/`
-- [ ] Expect: **FAQ** eligible. Person, ProfessionalService, SoftwareSourceCode, HowTo and ItemList are *understood* but have no visual rich result — that is correct, not a failure.
+- [ ] Expect: **no rich results at all**, and that is the correct outcome. Google removed FAQ rich results on **7 May 2026** and deprecated HowTo in 2023. Person, ProfessionalService, SoftwareSourceCode and ItemList have never had a visual rich result. The test should report the types as *detected and valid* with zero errors — that is what "passing" looks like for this site.
 - [ ] <https://validator.schema.org/> → same URL → expect **0 errors, 0 warnings**
 
 ### 4. Reciprocal profile links — this is what makes `sameAs` mean anything

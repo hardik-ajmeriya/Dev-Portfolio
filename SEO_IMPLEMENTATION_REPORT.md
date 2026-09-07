@@ -221,6 +221,23 @@ touch-target treatment, with visible text and no new ARIA.
 
 ## Expected impact
 
+> ### Correction — FAQ rich results no longer exist
+>
+> An earlier report of mine said to expect an FAQ rich result. That was wrong.
+> Google **removed FAQ rich results entirely on 7 May 2026**, and had already
+> restricted them to government and health sites in August 2023. `HowTo` rich
+> results were deprecated in the same 2023 announcement.
+>
+> **The markup stays**, and this is not a wasted effort:
+>
+> - ChatGPT, Claude, Perplexity and Gemini parse `FAQPage` and `HowTo` heavily.
+>   Question-and-answer pairs with a named author are among the most quotable
+>   structures an answer engine can find.
+> - It costs ~1 KB gzipped and carries no penalty.
+> - What changed is only the *visible Google result*, not the machine-readability.
+>
+> So: keep it for AI SEO, expect nothing from it in the blue links.
+
 **Reliable, within weeks of indexing:**
 - The `Person` entity is unambiguous — name, location, occupation, contact,
   profiles, CV, 31 topics, all linked in one graph.
