@@ -5,6 +5,17 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
 
+  // Load .env from the REPO ROOT, not from app/.
+  //
+  // VITE_WEB3FORMS_ACCESS_KEY lives in ../.env and the contact form needs it
+  // at build time. Without this, Vite looks only in app/, finds nothing, and
+  // bakes `undefined` into the bundle — a form that fails at runtime with no
+  // build-time complaint at all.
+  //
+  // Only VITE_-prefixed variables are ever exposed to the client, so widening
+  // the search directory does not risk leaking anything else that lands there.
+  envDir: '..',
+
   server: {
     proxy: {
       // The contact form posts to /api/enquiry, which is served by the

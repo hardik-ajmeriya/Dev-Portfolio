@@ -20,8 +20,8 @@ import { fileURLToPath } from 'node:url';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SOURCE = fs.readFileSync(path.join(HERE, 'public', 'countdown.js'), 'utf-8');
 
-/** The target baked into countdown.js: Tue 15 Sept 2026, 14:00 IST. */
-const TARGET = Date.UTC(2026, 8, 15, 8, 30, 0);
+/** The target baked into countdown.js: Wed 16 Sept 2026, 12:00 IST. */
+const TARGET = Date.UTC(2026, 8, 16, 6, 30, 0);
 
 function makeDom() {
   const el = (id) => ({
@@ -213,7 +213,7 @@ t('the target is a fixed UTC instant, not a local wall-clock time', () => {
   }
 });
 
-t('the baked-in target really is 14:00 IST on Tue 15 Sept 2026', () => {
+t('the baked-in target really is 12:00 IST on Wed 16 Sept 2026', () => {
   const ist = new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Asia/Kolkata',
     weekday: 'short', day: '2-digit', month: 'short', year: 'numeric',
@@ -221,8 +221,44 @@ t('the baked-in target really is 14:00 IST on Tue 15 Sept 2026', () => {
   }).format(new Date(TARGET));
   // "Sept" vs "Sep" varies with the ICU version Node was built against, so
   // match the part that is stable rather than the abbreviation.
-  if (!/Tue/.test(ist) || !/15 Sept? 2026/.test(ist) || !/14:00/.test(ist)) {
+  if (!/Wed/.test(ist) || !/16 Sept? 2026/.test(ist) || !/12:00/.test(ist)) {
     throw new Error('target is ' + ist);
+  }
+});
+
+/**
+ * The test above formats TARGET — this file's own constant. On its own that
+ * proves nothing about countdown.js, and for a while it proved nothing very
+ * convincingly: the page and this file both said 12:00 IST while countdown.js
+ * counted to 13:00, and this test passed throughout. Read the real value out
+ * of the source so the two can never drift apart again.
+ */
+t('countdown.js counts to exactly the TARGET this file tests against', () => {
+  const m = SOURCE.match(/var TARGET = Date\.UTC\(([^)]*)\)/);
+  if (!m) throw new Error('could not find TARGET in countdown.js');
+  const [y, mo, d, h, mi] = m[1].split(',').map((n) => parseInt(n.trim(), 10));
+  const baked = Date.UTC(y, mo, d, h, mi || 0);
+  if (baked !== TARGET) {
+    throw new Error(
+      `countdown.js counts to ${new Date(baked).toISOString()} but this file expects ${new Date(TARGET).toISOString()}`
+    );
+  }
+});
+
+/**
+ * And the page itself must say the same thing in words. The countdown is the
+ * machine-readable half of a promise; #cdWhen is the half a visitor reads.
+ */
+t('index.html tells visitors the same time the countdown counts to', () => {
+  const html = fs.readFileSync(path.join(HERE, 'public', 'index.html'), 'utf-8');
+  const m = html.match(/id="cdWhen"[^>]*>([^<]+)</);
+  if (!m) throw new Error('could not find #cdWhen in index.html');
+  const shown = m[1].replace(/&middot;/g, '·').trim();
+  const ist = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false,
+  }).format(new Date(TARGET));
+  if (!shown.includes(ist)) {
+    throw new Error(`page says "${shown}" but the countdown targets ${ist} IST`);
   }
 });
 

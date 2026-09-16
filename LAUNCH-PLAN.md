@@ -1,4 +1,4 @@
-# Launch plan — Tuesday 15 September 2026
+# Launch plan — Wednesday 16 September 2026
 
 **Target:** swap `hardikajmeriya.com` from the coming-soon sign to the real site.
 **Today:** Monday 7 September. Eight days.
@@ -9,8 +9,8 @@ the UK, EU and US East Coast in one window while India is still awake. Aim for
 **14:00–15:00 IST**: that is 09:30 UK, 10:30 CET, 04:30 US Eastern — the post is
 already sitting there when the US wakes up.
 
-One caution about the date itself: do not let *when* become more important than
-*what*. A Tuesday launch of a site whose four projects link nowhere converts
+One caution about the date itself: do not let _when_ become more important than
+_what_. A Tuesday launch of a site whose four projects link nowhere converts
 worse than a Thursday launch of one that has a live URL. The date is a rounding
 error next to the two blockers below.
 
@@ -34,8 +34,8 @@ they are the whole reason I would not launch today.
 
 ### Mon 8 – Wed 10 · Deploy CureNeed
 
-The single highest-value task of the week. One live URL turns *"I put
-applications into production"* from an assertion into something a client can
+The single highest-value task of the week. One live URL turns _"I put
+applications into production"_ from an assertion into something a client can
 click.
 
 - Deploy it anywhere credible — Cloudflare Workers, Vercel, Render, Fly. It does
@@ -45,14 +45,14 @@ click.
   showing a domain that does not exist is a small dishonesty that costs nothing
   to remove.
 - If it needs a backend and that is a week's work, deploy the **frontend only**
-  with seeded data and label it *"front-end demo — backend runs locally"*.
+  with seeded data and label it _"front-end demo — backend runs locally"_.
   Honest and clickable beats absent.
 
 ### Thu 11 · GitHub, and the `dcpvas` card
 
 **GitHub profile** — 20 minutes, and it is the second thing a client checks:
 
-- Bio: currently *"Android & DevOps Enthusiast"*. It should describe the person
+- Bio: currently _"Android & DevOps Enthusiast"_. It should describe the person
   the portfolio is selling.
 - Pin the four portfolio repos. Right now none of them are pinned; the pins are
   `AndroidStudioWebApp`, `SQL-Pizza-Sales`, `Titanic-Data-Analysis`.
@@ -64,7 +64,7 @@ click. Either push the repo and link it, or remove the project until it does.
 A card a visitor cannot act on is worse than one fewer project.
 
 **CureNeed credit** — the `MedCare` README lists two authors, you and Anshuman
-Singh. Add *"built with Anshuman Singh"* to the card. Shared credit costs
+Singh. Add _"built with Anshuman Singh"_ to the card. Shared credit costs
 nothing; being caught omitting it costs a great deal.
 
 ### Fri 12 · Email, end to end
@@ -96,13 +96,13 @@ production.
 
 ### The countdown
 
-`hardikajmeriya.com` now shows a live countdown to **15 Sept, 14:00 IST**, in
+`hardikajmeriya.com` now shows a live countdown to **16 Sept, 11:00 IST**, in
 each visitor's own timezone. Two things about it worth knowing:
 
 - **If you move the date**, edit `TARGET` at the top of
   `coming-soon/public/countdown.js` and redeploy the coming-soon Worker.
   `scripts/preflight.mjs` fails if the target has gone stale.
-- **If you slip past Tuesday**, it handles itself. For 24 hours it says
+- **If you slip past Wednesday**, it handles itself. For 24 hours it says
   "Launching — today"; after that the whole block hides and the page looks
   exactly as it did before. A timer frozen at 00:00:00 advertises a missed
   deadline to every visitor, so it removes itself rather than doing that.
@@ -153,6 +153,7 @@ cd ../.. && node coming-soon/countdown.test.mjs
 node scripts/schema.test.mjs
 node scripts/check-design-leak.mjs
 ```
+
 Expect 15 + 47 + 14 + 18 + 25 = **119 passing**, and no design leaks.
 
 ### 3. Deploy the Worker
@@ -218,7 +219,7 @@ See `SEO-AUDIT.md` for the full picture, `SEO_TODO.md` for the launch-day
 checklist (Search Console, Bing, GitHub profile, one email address) and
 `SEO_SCORE.md` for where each area stands.
 
-### 7. Share — 14:00 IST
+### 7. Share — 11:00 IST
 
 Add the website link to **LinkedIn, GitHub and X profiles first**. Those
 profile links are the `sameAs` signal that ties the domain to your name, and
@@ -254,8 +255,8 @@ Real, but none of it should delay Tuesday:
 ## The honest summary
 
 The engineering is ready. It has been ready since the audit. What is not ready
-is the evidence: a site that says *"most developers hand you a repository and
-stop — I hand you a running application"*, followed by four projects that link
+is the evidence: a site that says _"most developers hand you a repository and
+stop — I hand you a running application"_, followed by four projects that link
 to no running application.
 
 Deploy CureNeed. Fix the GitHub profile. Everything else on this page is

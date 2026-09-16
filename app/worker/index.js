@@ -303,27 +303,31 @@ export default {
       );
     }
 
-    // Missing secret is a deployment mistake, not a visitor's problem — say
-    // so explicitly rather than letting it look like a generic upstream
-    // failure. This is the most common cause of a broken form.
-    if (!env.RESEND_API_KEY) {
-      console.error('RESEND_API_KEY is not set — run `wrangler secret put`, or add it to .dev.vars for local dev');
-      return json(
-        {
-          success: false,
-          message: 'The form is misconfigured. Please email me directly.',
-          code: 'missing_api_key',
-        },
-        503
-      );
-    }
-
-    // Persist before emailing. If the database write fails the submission
-    // still goes through — losing an enquiry would be far worse than losing
-    // a row — but doing it first means a send failure never loses the data.
+    // Persist FIRST, before anything that can fail for a reason that has
+    // nothing to do with the visitor.
+    //
+    // This used to sit below the RESEND_API_KEY check, which meant a missing
+    // or expired key did not just stop the email — it threw the enquiry away
+    // before it was ever written down, and /admin showed nothing. The cheapest
+    // possible failure is a row we could have kept and didn't, so the write
+    // now happens while we still have the data in hand.
     const saved = await saveEnquiry(data, request, env);
     if (!saved.ok && !saved.skipped) {
-      console.error('Enquiry not persisted, continuing to email anyway:', saved.error);
+      console.error('Enquiry not persisted, continuing anyway:', saved.error);
+    }
+
+    // Resend is OPTIONAL. The notification email is normally sent from the
+    // visitor's browser through Web3Forms (see Contact.jsx — their API refuses
+    // server-to-server calls, so a Worker cannot do it), and this endpoint's
+    // job is to keep the archive copy for /admin.
+    //
+    // If a Resend key is configured we also send from here, which restores the
+    // original behaviour — owner notification plus branded auto-reply — with
+    // no other change. Without one, storing the enquiry IS the whole contract,
+    // so report success rather than failing a request that did its job.
+    if (!env.RESEND_API_KEY) {
+      await sweepExpired(env);
+      return json({ success: true, stored: saved.ok === true, emailed: false });
     }
 
     const owner = await notifyOwner(data, env);

@@ -10,6 +10,25 @@ import { PROJECT_TYPES, BUDGET_RANGES, TIMELINES } from '../../data/contactOptio
 
 export const CONTACT_EMAIL = 'hardik.ajmeriya89@gmail.com';
 
+/**
+ * Where the enquiry email is sent from.
+ *
+ * Web3Forms is called straight from this browser, which is not a shortcut —
+ * it is the only way their API may be used. A server-to-server call is
+ * refused with a 403 ("this method is not allowed") unless you are on a paid
+ * plan AND have safelisted your server's IP address, and a Cloudflare Worker
+ * has no stable outbound IP to safelist even if you paid. So the Worker
+ * cannot send this email on our behalf; the browser has to.
+ *
+ * The access key being public is expected — every Web3Forms integration ships
+ * it in the page. It authorises delivery to one inbox and nothing else: it
+ * cannot read past submissions, change the destination, or touch the account.
+ * Abuse protection is the honeypot below, the timing checks, and Web3Forms'
+ * own spam filtering rather than key secrecy.
+ */
+const WEB3FORMS_ENDPOINT = 'https://api.web3forms.com/submit';
+const WEB3FORMS_ACCESS_KEY = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
+
 /** Seconds a browser must wait between successful sends. */
 const COOLDOWN_SECONDS = 45;
 /** Nobody legitimately completes this form faster than this. */
@@ -126,53 +145,57 @@ export default function Contact() {
       return;
     }
 
+    // A missing key means the build never saw ../.env. Say that plainly
+    // rather than letting Web3Forms reject it as a malformed submission —
+    // the visitor's message would be lost either way, but only one of these
+    // tells you why.
+    if (!WEB3FORMS_ACCESS_KEY) {
+      setFormError(
+        import.meta.env.DEV
+          ? 'Dev: VITE_WEB3FORMS_ACCESS_KEY is missing. Add it to the repo-root .env and restart the dev server.'
+          : `The form is misconfigured. Please email me directly at ${CONTACT_EMAIL}.`
+      );
+      return;
+    }
+
     setSubmitting(true);
 
+    const enquiry = {
+      name: data.name,
+      email: data.email,
+      company: data.company,
+      projectType: data.projectType,
+      budget: data.budget,
+      timeline: data.timeline,
+      message: data.message,
+    };
+
     try {
-      // Posts to our own Worker (app/worker/index.js), which re-validates
-      // server-side and sends both emails via Resend — the notification to
-      // Hardik and the auto-reply to the visitor. Keeps the Resend key out
-      // of this bundle entirely, which is the whole point.
-      const response = await fetch('/api/enquiry', {
+      // 1. The email. This is the request the visitor's outcome depends on:
+      //    if Web3Forms accepts it, the message reached Hardik's inbox.
+      const response = await fetch(WEB3FORMS_ENDPOINT, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
         body: JSON.stringify({
-          name: data.name,
-          email: data.email,
-          company: data.company,
-          projectType: data.projectType,
-          budget: data.budget,
-          timeline: data.timeline,
-          message: data.message,
+          access_key: WEB3FORMS_ACCESS_KEY,
+          subject: `New enquiry from ${data.name}${data.company ? ` (${data.company})` : ''}`,
+          from_name: 'hardikajmeriya.com',
+          replyto: data.email,
+          // Web3Forms honours a field literally named botcheck: any value at
+          // all and the submission is dropped on their side. Ours is already
+          // checked above, so this is belt and braces.
           botcheck: data.botcheck || '',
+          ...enquiry,
         }),
       });
-      // A 502 here is the Vite dev proxy failing to reach the Worker, not a
-      // response from it — the body is HTML, so parsing it as JSON would
-      // throw and surface as a confusing "network error".
-      if (response.status === 502) {
-        setFormError(
-          import.meta.env.DEV
-            ? 'Dev: the API Worker is not running. Start it with `npm run dev:api` in a second terminal.'
-            : `Could not reach the server. Please email me directly at ${CONTACT_EMAIL}.`
-        );
-        return;
-      }
 
       const json = await response.json().catch(() => null);
 
-      // The server has its own rate limit (worker/rateLimit.js) which is the
-      // one that actually binds — the COOLDOWN_SECONDS check above runs in
-      // this browser and anyone can skip it. Give it a distinct message so a
-      // genuine visitor who hits it knows to wait rather than assuming the
-      // form is broken.
+      // Their rate limiting, not ours — the Worker's limiter no longer sits
+      // in front of this request, so this is the one that can actually fire.
       if (response.status === 429) {
-        const wait = Number(response.headers.get('retry-after')) || 0;
-        const minutes = Math.ceil(wait / 60);
         setFormError(
-          wait
-            ? `Too many submissions from this connection. Please try again in about ${minutes} minute${minutes === 1 ? '' : 's'}, or email me directly at ${CONTACT_EMAIL}.`
-            : `Too many submissions from this connection. Please email me directly at ${CONTACT_EMAIL}.`
+          `Too many submissions from this connection. Please try again shortly, or email me directly at ${CONTACT_EMAIL}.`
         );
         return;
       }
@@ -181,8 +204,22 @@ export default function Contact() {
         lastSentAt.current = Date.now();
         setSucceeded(true);
         reset();
+
+        // 2. Store a copy for the /admin panel. Deliberately AFTER the
+        //    visitor has been told it worked, and deliberately not awaited:
+        //    the enquiry is already delivered by email, so a database that
+        //    is down, migrating or misconfigured must not turn a successful
+        //    send into a visible failure. Worst case we lose the archive
+        //    copy, never the message itself.
+        fetch('/api/enquiry', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ ...enquiry, botcheck: '' }),
+        }).catch(() => {});
       } else {
-        setFormError(json?.message || 'Something went wrong. Please try again.');
+        setFormError(
+          json?.message || `Something went wrong. Please email me directly at ${CONTACT_EMAIL}.`
+        );
       }
     } catch {
       setFormError(`Network error. You can also email me directly at ${CONTACT_EMAIL}.`);

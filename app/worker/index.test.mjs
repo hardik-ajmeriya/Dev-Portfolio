@@ -104,12 +104,18 @@ await t('owner notification failure -> 503 (distinct from proxy 502)', async()=>
   const r = await mod.fetch(post(valid), env);
   const j = await r.json(); eq(r.status,503,'status'); eq(j.code,'upstream_failed','code');
 });
-await t('missing RESEND_API_KEY -> 503 with a clear code', async()=>{
-  globalThis.fetch = async()=>({ok:true,text:async()=>''});
+// Resend is optional now: the enquiry email is sent from the browser through
+// Web3Forms, and this endpoint's job is the archive copy for /admin. Storing
+// it IS the contract, so no key must still be a success — and, critically,
+// must not discard the enquiry. The old behaviour (503, nothing written)
+// threw the data away before it was ever saved.
+await t('no RESEND_API_KEY -> still 200, still stored, reported as not emailed', async()=>{
+  globalThis.fetch = async()=>{ throw new Error('no email provider should be called'); };
   const r = await mod.fetch(post(valid), {...env, RESEND_API_KEY:undefined});
   const j = await r.json();
-  eq(r.status,503,'status');
-  eq(j.code,'missing_api_key','code');
+  eq(r.status,200,'status');
+  eq(j.success,true,'success');
+  eq(j.emailed,false,'emailed');
 });
 
 console.log();

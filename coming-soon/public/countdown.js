@@ -16,13 +16,18 @@
    * THE ONE THING TO EDIT IF THE DATE MOVES.
    *
    * Written as a UTC instant on purpose. The audience is international, so
-   * "14:00" alone is meaningless — this is one fixed moment in time that
+   * "22:00" alone is meaningless — this is one fixed moment in time that
    * every visitor's browser converts into their own clock.
    *
-   * 2026-09-15T08:30:00Z  =  Tue 15 Sept 2026, 14:00 IST
-   *                       =  09:30 London, 10:30 Berlin, 04:30 New York
+  * 2026-09-16T06:30:00Z  =  Wed 16 Sept 2026, 12:00 IST
+  *                       =  07:30 London, 08:30 Berlin, 02:30 New York
+   *
+   * This MUST match the human-readable time in index.html (#cdWhen) and the
+   * TARGET in ../countdown.test.mjs. They disagreed once — the page promised
+   * 12:00 IST while this counted to 13:00 — and the only symptom was an hour
+   * still showing on the clock at the moment the page said the site was live.
    * ------------------------------------------------------------------ */
-  var TARGET = Date.UTC(2026, 8, 15, 8, 30, 0); // month is 0-indexed: 8 = September
+  var TARGET = Date.UTC(2026, 8, 16, 6, 30, 0); // month is 0-indexed: 8 = September
 
   /* How long after the target we keep saying "launching today" before giving
    * up and hiding the countdown entirely.
