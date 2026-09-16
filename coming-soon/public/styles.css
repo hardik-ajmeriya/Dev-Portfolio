@@ -299,3 +299,85 @@
     .swing,.board,.shadow{animation:none}
     .swing{transform:rotate(0)}
   }
+
+  /* ---------- launch countdown ----------
+     Sits below the sign, static while the board swings above it. Uses the
+     same night/brass/cream palette and the same two typefaces as the rest of
+     this page — nothing here borrows from the real site's design. */
+
+  .cd{
+    position:relative;z-index:3;
+    margin-top:clamp(26px,4.4vh,44px);
+    text-align:center;
+    padding:0 18px;
+  }
+
+  .cd[hidden]{display:none}
+
+  .cd-lead{
+    font-size:clamp(9px,1.6vw,11px);
+    letter-spacing:.34em;text-transform:uppercase;
+    margin-right:-.34em;              /* trailing letter-space re-centres it */
+    color:rgba(242,231,213,.5);
+  }
+
+  .cd-grid{
+    list-style:none;
+    display:flex;justify-content:center;
+    gap:clamp(8px,2.2vw,16px);
+    margin:clamp(12px,2vh,18px) 0 0;
+  }
+
+  .cd-grid[hidden]{display:none}
+
+  .cd-grid li{
+    display:flex;flex-direction:column;align-items:center;gap:7px;
+    min-width:clamp(58px,15vw,80px);
+    padding:clamp(10px,1.6vh,15px) clamp(6px,1.4vw,12px);
+    border-radius:9px;
+    /* a brass-edged plaque, lit from above like everything else on this page */
+    background:linear-gradient(180deg, rgba(255,225,180,.07), rgba(0,0,0,.28));
+    border:1px solid rgba(201,162,39,.28);
+    box-shadow:
+      inset 0 1px 0 rgba(255,225,180,.14),
+      0 10px 22px rgba(0,0,0,.45);
+  }
+
+  .cd-num{
+    font-family:'DM Serif Display',Georgia,serif;
+    font-size:clamp(1.5rem,5vw,2.35rem);
+    line-height:1;
+    color:var(--cream);
+    /* tabular figures: without this the digits are proportionally spaced and
+       the box visibly jitters every time a 1 replaces an 8 */
+    font-variant-numeric:tabular-nums;
+    font-feature-settings:'tnum' 1;
+    text-shadow:0 2px 0 rgba(0,0,0,.4), 0 0 18px rgba(255,200,120,.18);
+  }
+
+  .cd-lab{
+    font-size:clamp(8px,1.5vw,9.5px);
+    letter-spacing:.2em;text-transform:uppercase;
+    margin-right:-.2em;
+    color:rgba(242,231,213,.42);
+  }
+
+  .cd-when{
+    margin-top:clamp(11px,1.8vh,16px);
+    font-size:clamp(10.5px,1.9vw,12.5px);
+    letter-spacing:.04em;
+    color:rgba(242,231,213,.5);
+  }
+
+  /* Below ~340px four plaques cannot fit side by side without the numbers
+     shrinking to nothing. Drop the seconds — it is the least useful unit at a
+     week's distance and the only one that must animate. */
+  @media (max-width:359px){
+    .cd-grid li:last-child{display:none}
+  }
+
+  /* Short viewports (landscape phones): the sign and the footer take priority. */
+  @media (max-height:520px){
+    .cd{margin-top:clamp(14px,2.4vh,22px)}
+    .cd-grid li{padding:8px 8px}
+  }

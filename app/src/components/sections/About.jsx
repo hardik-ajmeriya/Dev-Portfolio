@@ -10,9 +10,11 @@ export default function About() {
           <div className="rv">
             <img
               src="/images/Me.webp"
-              alt="Hardik"
+              alt="Hardik Ajmeriya, full-stack developer and cloud engineer"
               loading="lazy"
               decoding="async"
+              width={864}
+              height={1085}
               className="w-full rounded-[14px] grayscale transition-[filter] duration-700 hover:grayscale-0"
             />
           </div>
@@ -20,11 +22,11 @@ export default function About() {
           <div className="rv">
             <div className="sec-num">05 / ABOUT</div>
 
-            <p className="mt-6 font-display text-[clamp(1.6rem,3vw,2.6rem)] font-semibold leading-[1.32] tracking-[-0.03em]">
-              I&rsquo;m Hardik — a full-stack developer who also does the infrastructure. That
-              combination means your project doesn&rsquo;t stall at the handover, waiting for
+            <h2 className="mt-6 font-display text-[clamp(1.6rem,3vw,2.6rem)] font-semibold leading-[1.32] tracking-[-0.03em]">
+              I&rsquo;m Hardik Ajmeriya — a full-stack developer who also does the infrastructure.
+              That combination means your project doesn&rsquo;t stall at the handover, waiting for
               someone else to work out how to deploy it.
-            </p>
+            </h2>
 
             <p className="mt-7 max-w-[620px] text-base leading-[1.75] text-muted">
               I work with React, Node and MongoDB on the application side, and Docker, Kubernetes,

@@ -7,26 +7,34 @@ configure in the Cloudflare dashboard.
 
 ## The short version
 
-This site is **static files served from Cloudflare's edge**. There is no origin
-server of yours, no database, no backend API, and no code of yours executing on
-a request. That removes most of the attack surface a normal website has:
+This is **static files served from Cloudflare's edge, plus a Worker** that
+handles the contact form and a private admin panel backed by a D1 database.
+
+There is still no origin server of yours to attack and no VM to patch. But the
+Worker and D1 mean this is no longer purely static, and the threat model has to
+say so:
 
 | Common attack | Applies here? |
 | --- | --- |
-| SQL injection | No — there is no database |
-| Server RCE / shell | No — there is no server of yours running code |
-| Auth bypass / session hijack | No — there are no accounts or sessions |
+| SQL injection | **Applies** — D1 stores enquiries. Mitigated: every query is parameterised via `.bind()`, including the LIKE search. No SQL is ever built by string concatenation |
+| Server RCE / shell | No — Workers run in a V8 isolate, no shell, no filesystem |
+| Auth bypass on the admin panel | **Applies** — mitigated by Cloudflare Access at the edge plus an `ADMIN_EMAIL` check in the Worker. See ADMIN.md |
+| Personal data breach | **Applies** — client names, emails and briefs are now stored. This is the change that raised the stakes |
 | File upload abuse | No — nothing accepts uploads |
 | Origin IP discovery → direct attack | No — there is no origin to find |
-| DDoS / request flood | Absorbed by Cloudflare (see below) |
-| XSS | Mitigated by CSP; also no user input is rendered |
+| DDoS / request flood | Absorbed by Cloudflare (§1, §2b) |
+| Email relay abuse via the auto-reply | **Applies** — the auto-reply goes to a visitor-supplied address. Mitigated by the per-recipient rate limit (§2a) |
+| XSS | Mitigated by CSP. The admin panel escapes every value it renders |
+| CSV formula injection | **Applies** to the admin export — mitigated by prefixing cells starting `= + - @` |
 | Clickjacking | Blocked by `X-Frame-Options` / `frame-ancestors` |
-| Contact form spam | **Real risk** — mitigated, see below |
-| Cloudflare account takeover | **The biggest real risk** — see below |
+| Contact form spam | **Real risk** — mitigated: honeypot, server-side validation, and per-IP / per-recipient / site-wide rate limits in the Worker (§2a) |
+| Cloudflare account takeover | **The biggest real risk** — see below, and it now guards a client database, not just a website |
 
-Most of what people mean by "protect from cyber attacks" simply does not apply
-to a static site. The two things that genuinely matter are at the bottom of
-that table.
+> **This section previously claimed there was no database and no backend.** That
+> was true before the enquiry Worker and admin panel were added. It is recorded
+> here because a security document that understates the attack surface is worse
+> than no document — if you add a feature that changes this list, change this
+> list.
 
 ---
 
@@ -50,7 +58,61 @@ The rate limiting rule below is what addresses it.
 
 ---
 
-## 2. Rate limiting (configure this)
+## 2. Rate limiting
+
+Two layers, and they defend different things.
+
+### 2a. In the Worker — already implemented
+
+`app/worker/rateLimit.js`, backed by the `rate_limits` table (migration
+`0002`). This is the layer that protects the **contact form specifically**,
+and it exists because the cooldown in `Contact.jsx` runs in the visitor's
+browser: it stops a double-click and nothing else.
+
+| Bucket | Limit | What it stops |
+| --- | --- | --- |
+| Per IP | 5/hour, 15/day | One machine scripting the form |
+| **Per recipient address** | **3/hour, 6/day** | **Using this domain as an open relay** |
+| Site-wide | 40/day | A distributed flood exhausting the email quota |
+
+The per-recipient bucket is the one worth understanding. The auto-reply is
+sent to whatever address the *submitter* typed. Without a cap on that, anyone
+can make `hardikajmeriya.com` send repeated mail to a person who never asked
+for it — and the damage lands on your sending reputation, not theirs.
+
+The site-wide cap is arithmetic, not a guess: Resend's free plan allows 100
+emails a day and each submission sends two, so 40 submissions = 80 emails,
+leaving headroom. There is a test asserting this stays true if the number is
+ever changed.
+
+It **fails open**. If D1 is unavailable the submission still goes through.
+That is the opposite of `worker/access.js`, which fails closed — and the
+difference is deliberate: losing a real enquiry is worse than admitting some
+spam, whereas exposing client data is worse than locking yourself out.
+
+Apply the migration before the first deploy:
+
+```bash
+cd app
+npx wrangler d1 migrations apply hardik-enquiries --remote
+```
+
+Optionally set a salt so the stored hashes are unique to your deployment:
+
+```bash
+npx wrangler secret put RATE_LIMIT_SALT
+```
+
+No raw IP or email address is ever written to the table — only a salted
+SHA-256. The limiter only needs to know whether two requests came from the
+same place, so storing the value itself would be collecting personal data for
+no reason.
+
+### 2b. At the edge — configure this
+
+The Worker limiter does not help with a flood aimed at the *site* rather than
+the form, because that traffic never reaches the enquiry endpoint. That is
+what the WAF rule is for.
 
 The free plan includes **one** rate limiting rule. Expressions on the free plan
 can only match on **Path** and **Verified Bot**, so keep it simple.
@@ -107,27 +169,34 @@ The contact form is the only thing on the site that *does* something, so it is
 the only thing that can be abused. Someone can script requests to it and fill
 your inbox.
 
-Three defences are implemented in `app/src/components/sections/Contact.jsx`:
+Defences are implemented in two layers: client-side in
+`app/src/components/sections/Contact.jsx` for fast feedback, and re-checked
+server-side in the Worker (`app/worker/index.js`), which is the layer that
+actually matters — anyone can bypass the browser and POST straight to
+`/api/enquiry` with curl.
 
 1. **Honeypot** — a `botcheck` field positioned off-screen and hidden from
-   screen readers. Bots that fill every input trip it and the submission is
-   silently discarded. Web3Forms also rejects it server-side.
+   screen readers. Bots that fill every input trip it; the Worker accepts the
+   request (so the bot gets no signal) and sends nothing.
 2. **Minimum fill time** — submissions faster than 3 seconds after page load
-   are rejected. No human reads and completes the form that fast.
+   are rejected client-side. No human reads and completes the form that fast.
 3. **Cooldown** — 45 seconds enforced between submissions from the same
-   browser.
+   browser, client-side.
+4. **Server-side validation** — the Worker re-validates every field
+   independently of the browser (`worker/index.js`'s `validate()`), so a
+   forged request that skips the client entirely still can't send garbage.
+5. **Same-origin check** — the Worker rejects requests whose `Origin` header
+   isn't the site itself, which stops the endpoint being driven from another
+   website in a real browser (not a control against a direct curl/script POST,
+   since `Origin` can be forged by a non-browser client).
 
-These stop unsophisticated bots, which is the overwhelming majority. They are
-client-side, so a determined attacker can bypass them by posting directly to
-the Web3Forms endpoint.
+These stop unsophisticated bots and casual abuse, which is the overwhelming
+majority. **If you ever get real spam that gets past all of this, add
+Cloudflare Turnstile verification in the Worker** — you control the server
+side, so this is a straightforward addition (see `AUTOREPLY.md`).
 
-**If you ever get real spam, turn on hCaptcha in the Web3Forms dashboard.**
-That is a server-side check and is the actual fix. It costs a little friction
-for genuine visitors, so it is not worth enabling pre-emptively.
-
-Note the Web3Forms access key is public by design — it is visible in the page
-source and cannot be hidden in a static site. That is expected. It only allows
-sending to *your* form; it grants nothing else.
+The Resend API key never reaches the browser — it's a Worker secret, not a
+build-time env var, so it isn't visible in the page source.
 
 ---
 

@@ -9,8 +9,23 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://hardikajmeriya.com/</loc>
-    <lastmod>2026-09-02</lastmod>
+    <lastmod>2026-09-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
+  </url>
+
+  <!--
+    The CV. A second real URL, and the only one besides the homepage.
+
+    Worth stating plainly, because it is the answer to "why no sitelinks":
+    Google builds a sitelink block from INDEXED URLS, and this site has two.
+    Anchors like #work are not URLs. Sitelinks of the kind in a mocked-up
+    search result need several substantial pages — see SEO_TODO.md.
+  -->
+  <url>
+    <loc>https://hardikajmeriya.com/resume</loc>
+    <lastmod>2026-09-07</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
   </url>
 </urlset>

@@ -153,23 +153,22 @@ npm run preview
 
 ---
 
-## 2. Environment variable
+## 2. Worker secret
 
-The contact form posts to Web3Forms and needs its access key.
+The contact form posts to `/api/enquiry`, handled by the Worker
+(`app/worker/index.js`), which emails both the enquiry notification and the
+client auto-reply via Resend. It needs one secret:
 
-Locally, `app/.env` already contains:
-
+```bash
+cd app
+npx wrangler secret put RESEND_API_KEY
 ```
-VITE_WEB3FORMS_ACCESS_KEY=<your key>
-```
 
-**This is a build-time variable.** Vite bakes it into the bundle at build time,
-so it must be set in Cloudflare too, or the contact form silently fails in
-production. Step 3 covers where to add it.
-
-> Note: any `VITE_`-prefixed variable ends up visible in the shipped JavaScript.
-> That is expected and fine for a Web3Forms public access key — it is designed to
-> be public. Never put a real secret behind a `VITE_` prefix.
+**This is a Worker secret, not a build-time env var** — it never touches the
+client bundle, and is stored encrypted by Cloudflare rather than baked into the
+JavaScript. Set once, it persists across deploys; no dashboard step needed for
+a `wrangler deploy`. See `AUTOREPLY.md` for the full setup (Resend account,
+domain verification, local dev via `app/.dev.vars`).
 
 ---
 
@@ -200,11 +199,11 @@ production. Step 3 covers where to add it.
    The **root directory must be `app`** — the Vite project lives in a subfolder,
    not at the repo root. This is the most common thing to get wrong here.
 
-5. Under **Variables and Secrets**, add:
+5. Under **Variables and Secrets**, add a secret (not a plaintext variable):
 
    | Name | Value |
    | --- | --- |
-   | `VITE_WEB3FORMS_ACCESS_KEY` | your Web3Forms key |
+   | `RESEND_API_KEY` | your Resend API key |
 
 6. Save and deploy. You get a `hardik-portfolio.<subdomain>.workers.dev` URL.
    Check it before attaching the real domain.
@@ -222,9 +221,10 @@ URL that the deploy produced and check:
 - the 3D hero scene loads on desktop, and is skipped on mobile
 - project screenshots appear
 - the technology filter tabs work
-- **the contact form actually sends** — submit a real test message and confirm it
-  arrives in your inbox. This is the one that fails silently if
-  `VITE_WEB3FORMS_ACCESS_KEY` was not set in step 3.
+- **the contact form actually sends** — submit a real test message and confirm
+  both the enquiry notification and the client auto-reply arrive. This is the
+  one that fails (with a clear "form is misconfigured" message, not silently)
+  if `RESEND_API_KEY` was not set in step 3.
 
 ---
 
@@ -243,7 +243,20 @@ npm run cf:tail      # live request logs
 
 ## 6. Launch — swap the domain to the real site
 
-Once the real site checks out on its workers.dev URL:
+> **See `LAUNCH-PLAN.md` for the full runbook**, including the preflight script,
+> the D1 migration and the post-launch verification. This section is the domain
+> swap only.
+
+Before you touch the domain:
+
+```bash
+cd app && npm run build
+cd .. && node scripts/preflight.mjs      # must exit 0
+cd app && npx wrangler d1 migrations apply hardik-enquiries --remote
+npm run deploy
+```
+
+Then:
 
 1. **Detach** the domain from the coming-soon Worker:
    `hardik-coming-soon` → Settings → Domains & Routes → remove
@@ -258,6 +271,16 @@ adding before removing will just error. There is a brief gap between the two
 steps where the domain does not resolve to anything — it is seconds, and no one
 is watching yet.
 
+**Attach `www` as well, not only the apex.** The Worker 301-redirects
+`www.hardikajmeriya.com` to the apex, but only for requests that actually reach
+it. If www is left pointing at the removed coming-soon Worker, anyone who types
+"www." gets an error page instead of the site.
+
+The redirect also exists for a second reason worth knowing: `PUBLIC_HOST` is the
+apex alone, and every other hostname this Worker answers on is treated as a
+private preview and gated behind Cloudflare Access. Without the explicit www
+rule, www would fall into that branch and show visitors a login screen.
+
 3. **Undo the noindex.** The coming-soon page deliberately blocks search
    engines. Once the real site is on the domain, make sure it is *not* carrying
    those rules — the real site has no `robots.txt` and no robots meta tag, so
@@ -268,11 +291,20 @@ Once the real site is live and stable, you can delete the `hardik-coming-soon`
 Worker from the dashboard. The source stays in the repo if you ever want it
 again (a maintenance page, for instance).
 
-Consider carrying the `_headers` file across to `app/public/` too, so the real
-site ships the same protections. It will need a looser CSP — the real site loads
-Devicon logos from `cdn.jsdelivr.net` and posts the contact form to
-`api.web3forms.com`, so `img-src` and `connect-src` must allow those. Ask me and
-I will write it.
+`app/public/_headers` already carries the same protections for the real site,
+with a CSP loosened only where it's actually needed — Devicon logos from
+`cdn.jsdelivr.net` and Cloudflare Web Analytics. Fonts are self-hosted, so
+`fonts.googleapis.com` and `fonts.gstatic.com` are no longer trusted at all. The
+contact form posts same-origin to `/api/enquiry`, so no third-party form
+endpoint needs an allowance there.
+
+**After the swap, confirm the admin did not go public with the site:**
+
+```powershell
+curl.exe -s -o NUL -w "%{http_code}`n" https://admin.hardikajmeriya.com/api/admin/enquiries
+```
+
+Must be 401 or 302. If it returns 200, stop and take the domain back down.
 
 ---
 

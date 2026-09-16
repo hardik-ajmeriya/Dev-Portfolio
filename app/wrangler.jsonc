@@ -1,23 +1,94 @@
 {
-  // Cloudflare Workers configuration
+  // Cloudflare Workers configuration for the main site.
   // Docs: https://developers.cloudflare.com/workers/static-assets/
   "$schema": "node_modules/wrangler/config-schema.json",
 
   "name": "hardik-portfolio",
   "compatibility_date": "2026-09-01",
 
+  // The Worker script. Handles POST /api/enquiry and delegates everything
+  // else to the static assets via the ASSETS binding.
+  "main": "worker/index.js",
+
   "assets": {
     // Vite writes the production build here.
     "directory": "./dist",
 
-    // The site is a single-page app: any unknown path should serve
-    // index.html and let the client render it, rather than 404.
-    "not_found_handling": "single-page-application"
+    // Exposes the static files to the Worker as env.ASSETS.
+    "binding": "ASSETS",
+
+    // Serve dist/404.html, with an actual 404 status, for unknown paths.
+    //
+    // This was "single-page-application", which returns index.html with a
+    // 200 for EVERY path. That setting exists for apps with a client-side
+    // router that needs to see the URL — this site has no router at all, it
+    // is one document with #anchors, so the fallback did nothing useful and
+    // one thing harmful: every made-up URL (/pricing, /blog, /wp-admin)
+    // answered 200 with the full homepage. Google calls that a soft 404 and
+    // treats an unbounded set of duplicate URLs as a quality signal against
+    // the site.
+    "not_found_handling": "404-page",
+
+    // Routes that must reach the Worker BEFORE the static asset layer.
+    //
+    // Without a path listed here, Cloudflare tries to serve a matching file,
+    // finds none, and — because not_found_handling is single-page-application
+    // — returns dist/index.html instead. The Worker never runs.
+    //
+    // That is exactly what happened when /admin was missing from this list:
+    // visiting /admin served the prerendered portfolio page rather than the
+    // admin panel, in local dev and would have in production too.
+    "run_worker_first": ["/api/*", "/admin", "/admin/*"]
+  },
+
+  // Enquiries are stored here so the /admin panel has something to show.
+  // Create it once with:  npx wrangler d1 create hardik-enquiries
+  // then paste the returned database_id below. See ADMIN.md.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hardik-enquiries",
+      "database_id": "dd849afc-c69c-4c2b-aa30-fc46270e8a4a",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  "vars": {
+    // Only this verified identity may read the admin panel, even if the
+    // Cloudflare Access policy is ever widened by mistake. Not a secret.
+    "ADMIN_EMAIL": "hardikpt95@gmail.com",
+
+    // Cloudflare Access JWT verification. Both MUST be set or the admin
+    // panel refuses every request — it fails closed by design.
+    //
+    // ACCESS_TEAM_DOMAIN: Zero Trust → Settings → Custom Pages, shown as
+    //   "<your-team>.cloudflareaccess.com"
+    // ACCESS_AUD: the Application Audience (AUD) tag, on the Access
+    //   application's Overview tab. It is what ties a token to THIS app —
+    //   without it, a token for any other app in your team would be accepted.
+    //
+    // See ADMIN.md. Neither is a secret; both are safe in git.
+    "ACCESS_TEAM_DOMAIN": "curly-moon-74da.cloudflareaccess.com",
+    "ACCESS_AUD": "910c3c3d5eb5c146aaf3e03ed77e4c39bf62b7ce68c51d60f3a97348cc047e05",
+
+    // The ONE hostname the site may be served publicly on. Every other host
+    // this Worker answers on — admin.hardikajmeriya.com, and *.workers.dev
+    // if that subdomain is ever enabled — requires a verified Access token
+    // for every path, not just /admin.
+    //
+    // This exists because an Access application scoped to the path `admin`
+    // protects the panel while leaving the site root wide open, which is a
+    // dashboard mistake that looks identical to a correct setup until you
+    // check in a private window. The Worker no longer depends on getting
+    // that right.
+    "PUBLIC_HOST": "hardikajmeriya.com"
   },
 
   "observability": {
-    // Free request/error metrics in the Cloudflare dashboard.
-    // This replaces what Vercel Speed Insights was doing.
     "enabled": true
   }
+
+  // The secret is NOT stored here. Set it once with:
+  //   npx wrangler secret put RESEND_API_KEY
+  // For local dev, put it in app/.dev.vars (gitignored).
 }

@@ -1,0 +1,29 @@
+/* TEAM */
+
+  Developer:  Hardik Ajmeriya
+  Role:       Full-stack developer and cloud engineer
+  Site:       https://hardikajmeriya.com
+  Contact:    hardik.ajmeriya89@gmail.com
+  GitHub:     https://github.com/hardik-ajmeriya
+  LinkedIn:   https://www.linkedin.com/in/hardik-ajmeriya
+  Location:   Rajkot, Gujarat, India
+
+/* SITE */
+
+  Standards:  HTML5, CSS3, ECMAScript 2022, WCAG 2.2 AA
+  Stack:      React 18, Vite, Tailwind CSS, three.js
+  Backend:    Cloudflare Workers, D1 (SQLite), Resend
+  Hosting:    Cloudflare Workers with static assets
+  Rendering:  Prerendered to static HTML at build time, then hydrated
+  Typefaces:  Bricolage Grotesque, Inter, JetBrains Mono — self-hosted
+  Analytics:  none
+  Cookies:    none
+
+/* NOTES */
+
+  Prerendered because no major AI crawler executes JavaScript. Without it,
+  GPTBot, ClaudeBot and PerplexityBot would receive an empty <div> and index
+  nothing. See /llms.txt for a plain-language summary of what Hardik does.
+
+  Structured data is generated at build time from the same data files the page
+  renders from, so the schema cannot drift from the visible content.

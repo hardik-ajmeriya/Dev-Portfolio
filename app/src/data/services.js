@@ -18,6 +18,14 @@ export const services = [
   },
   {
     code: 'S/02',
+    title: 'SaaS Product\nDevelopment',
+    description:
+      'Subscription products built end to end — multi-tenant architecture, authentication and roles, billing, an admin dashboard, and the infrastructure to run it. From first version to paying customers.',
+    tags: ['Multi-tenancy', 'Stripe billing', 'Auth & roles', 'Admin dashboard', 'Usage analytics'],
+    price: null,
+  },
+  {
+    code: 'S/03',
     title: 'API Development\n& Integration',
     description:
       'REST APIs designed, documented and secured — plus integration of third-party services like payments, authentication, email and external data sources into your product.',
@@ -25,7 +33,7 @@ export const services = [
     price: null,
   },
   {
-    code: 'S/03',
+    code: 'S/04',
     title: 'Cloud Deployment\n& Infrastructure',
     description:
       'Your application provisioned and deployed on AWS — networking, compute, storage and databases set up properly, with SSL, domains and environment separation handled.',
@@ -33,7 +41,7 @@ export const services = [
     price: null,
   },
   {
-    code: 'S/04',
+    code: 'S/05',
     title: 'CI/CD Pipeline\nAutomation',
     description:
       'Automated build, test and deploy pipelines so shipping an update is one merge instead of a manual afternoon. Includes rollback paths for when a release goes wrong.',
@@ -41,7 +49,7 @@ export const services = [
     price: null,
   },
   {
-    code: 'S/05',
+    code: 'S/06',
     title: 'Containerisation\n& Kubernetes',
     description:
       'Services packaged into Docker images and orchestrated on Kubernetes, so the application scales under load and behaves the same in every environment.',
@@ -49,7 +57,7 @@ export const services = [
     price: null,
   },
   {
-    code: 'S/06',
+    code: 'S/07',
     title: 'Monitoring,\nMaintenance & Support',
     description:
       'Dashboards and alerting so problems surface before your customers report them — plus ongoing bug fixes, feature work and infrastructure care after handover.',

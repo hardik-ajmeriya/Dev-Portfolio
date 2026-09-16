@@ -2,19 +2,48 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/images/favicon.png" />
+    <!--
+      Favicon set generated from branding/favicon-v8-architect-h.png.
+      Regenerate with: python scripts/generate-icons.py
+
+      Served from the site ROOT, not /images. Browsers, crawlers and link
+      scrapers request /favicon.ico by path convention whether or not a <link>
+      tag exists; when the file only lived at /images/favicon.ico those
+      requests fell through to the 404 handler.
+
+      The two PNGs carry a transparent surround so the disc sits correctly on
+      both the light and dark tab strips. apple-touch-icon and the Android
+      icons are opaque squares instead, because iOS ignores alpha and rounds
+      the corners itself, and Android masks manifest icons to a circle — both
+      platforms cut the brand's circle out of the square for us.
+    -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f4f4f1" />
+    <meta name="theme-color" content="#f4f4f1" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0b0d" media="(prefers-color-scheme: dark)" />
 
     <!-- Title leads with the name, because ranking for "Hardik Ajmeriya" is
          the primary goal. Role follows for relevance on skill searches. -->
     <title>Hardik Ajmeriya — Full-Stack Developer &amp; Cloud Engineer</title>
     <meta
       name="description"
-      content="Hardik Ajmeriya is a full-stack developer who builds MERN applications and deploys them to production on AWS with Docker, Kubernetes and CI/CD. Available for freelance projects."
+      content="Hardik Ajmeriya builds MERN web applications and deploys them to production on AWS with Docker, Kubernetes and CI/CD. Available for freelance projects."
     />
     <meta name="author" content="Hardik Ajmeriya" />
     <link rel="canonical" href="https://hardikajmeriya.com/" />
+
+    <!--
+      Points AI agents at the plain-text summary. /llms.txt is a convention
+      rather than a registered standard, so without a link here or the note in
+      robots.txt the file is only found by crawlers that happen to guess the
+      path — which meant the most AI-legible asset on the site was effectively
+      invisible to the systems it was written for.
+    -->
+    <link rel="alternate" type="text/plain" href="/llms.txt" title="Plain-text summary for AI assistants" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 
     <meta property="og:type" content="profile" />
@@ -25,130 +54,70 @@
       property="og:description"
       content="MERN applications built end-to-end and deployed to production on AWS. Available for freelance projects."
     />
-    <meta property="og:image" content="https://hardikajmeriya.com/images/hero_pic.webp" />
+    <meta property="og:locale" content="en_IN" />
+    <!-- og:type is "profile", which defines these three. Declaring the type
+         without them leaves the object half-specified. -->
+    <meta property="profile:first_name" content="Hardik" />
+    <meta property="profile:last_name" content="Ajmeriya" />
+    <meta property="profile:username" content="hardik-ajmeriya" />
+    <!--
+      A purpose-built 1200x630 card, not the hero portrait.
+
+      Two reasons the old value was a problem. It pointed at a WebP, and
+      several link scrapers (notably some versions of the LinkedIn and
+      WhatsApp fetchers) will not render WebP and simply show no image. And
+      it was a 900x1213 portrait, so anything that did render it letterboxed
+      a tall photo into a wide slot. Declaring width/height also stops the
+      preview box reflowing while the image loads.
+    -->
+    <meta property="og:image" content="https://hardikajmeriya.com/images/og-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Hardik Ajmeriya — I build web apps and put them into production. MERN, AWS, Docker, Kubernetes, CI/CD."
+    />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Hardik Ajmeriya — Full-Stack Developer &amp; Cloud Engineer" />
     <meta
       name="twitter:description"
       content="MERN applications built end-to-end and deployed to production on AWS."
     />
-    <meta name="twitter:image" content="https://hardikajmeriya.com/images/hero_pic.webp" />
+    <meta name="twitter:image" content="https://hardikajmeriya.com/images/og-card.png" />
+    <meta
+      name="twitter:image:alt"
+      content="Hardik Ajmeriya — I build web apps and put them into production."
+    />
 
     <!--
-      Structured data. This is the highest-value thing on the page for AI
-      search: it states plainly who you are, what you do and what you offer,
-      in a format models and search engines parse directly rather than infer.
+      Fonts are self-hosted (see src/index.css). They used to be loaded from
+      fonts.googleapis.com, which put a third-party stylesheet on the critical
+      path in front of the largest text on the page, and required two
+      sequential round trips before a single glyph could be fetched: the CSS
+      from googleapis, then the files from gstatic. Serving them from this
+      origin reuses the connection that already delivered the HTML.
 
-      `sameAs` is what ties this domain to your other profiles and is the main
-      signal for ranking your own name. FILL IN the LinkedIn and X/Instagram
-      URLs below — they are placeholders right now.
+      prerender.js injects <link rel="preload"> tags for the two fonts the
+      first screen actually needs, using the hashed filenames from the build.
     -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "ProfilePage",
-        "url": "https://hardikajmeriya.com/",
-        "mainEntity": {
-          "@type": "Person",
-          "@id": "https://hardikajmeriya.com/#hardik",
-          "name": "Hardik Ajmeriya",
-          "givenName": "Hardik",
-          "familyName": "Ajmeriya",
-          "url": "https://hardikajmeriya.com/",
-          "email": "mailto:hardik.ajmeriya89@gmail.com",
-          "jobTitle": "Full-Stack Developer & Cloud Engineer",
-          "description": "Full-stack developer who builds MERN applications and deploys them to production on AWS with Docker, Kubernetes, Terraform and CI/CD pipelines.",
-          "knowsAbout": [
-            "MERN stack development",
-            "React",
-            "Node.js",
-            "Express.js",
-            "MongoDB",
-            "Next.js",
-            "JavaScript",
-            "TypeScript",
-            "REST API development",
-            "AWS",
-            "Amazon EKS",
-            "Docker",
-            "Kubernetes",
-            "Terraform",
-            "CI/CD pipelines",
-            "GitHub Actions",
-            "Jenkins",
-            "Argo CD",
-            "GitOps",
-            "Prometheus",
-            "Grafana",
-            "DevOps",
-            "Cloud infrastructure",
-            "Web application deployment"
-          ],
-          "sameAs": [
-            "https://github.com/hardik-ajmeriya",
-            "https://www.linkedin.com/in/REPLACE-WITH-YOUR-LINKEDIN",
-            "https://x.com/REPLACE-WITH-YOUR-HANDLE"
-          ],
-          "makesOffer": [
-            {
-              "@type": "Offer",
-              "itemOffered": {
-                "@type": "Service",
-                "name": "Full-Stack Web Application Development",
-                "description": "Custom web applications built on MongoDB, Express, React and Node — client portals, dashboards, storefronts and internal tools."
-              }
-            },
-            {
-              "@type": "Offer",
-              "itemOffered": {
-                "@type": "Service",
-                "name": "API Development & Integration",
-                "description": "REST APIs designed, documented and secured, plus integration of payments, authentication and third-party services."
-              }
-            },
-            {
-              "@type": "Offer",
-              "itemOffered": {
-                "@type": "Service",
-                "name": "Cloud Deployment & Infrastructure",
-                "description": "Applications provisioned and deployed on AWS with SSL, domains and environment separation handled."
-              }
-            },
-            {
-              "@type": "Offer",
-              "itemOffered": {
-                "@type": "Service",
-                "name": "CI/CD Pipeline Automation",
-                "description": "Automated build, test and deploy pipelines with rollback paths, using GitHub Actions, Jenkins and Argo CD."
-              }
-            },
-            {
-              "@type": "Offer",
-              "itemOffered": {
-                "@type": "Service",
-                "name": "Containerisation & Kubernetes",
-                "description": "Services packaged into Docker images and orchestrated on Kubernetes so applications scale under load."
-              }
-            },
-            {
-              "@type": "Offer",
-              "itemOffered": {
-                "@type": "Service",
-                "name": "Monitoring, Maintenance & Support",
-                "description": "Dashboards and alerting with Prometheus and Grafana, plus ongoing fixes and infrastructure care after handover."
-              }
-            }
-          ]
-        }
-      }
-    </script>
+    <!--
+      STRUCTURED DATA IS NOT HERE.
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
+      It is generated at build time by scripts/build-schema.mjs and injected
+      by prerender.js, derived from the same files the page renders from:
+      faq.js, projects.js, services.js, tech.js and seo.js.
+
+      It used to be three hand-written blocks in this file. They matched the
+      page — I verified it — but only because nobody had edited an answer yet.
+      The moment someone reworded an FAQ in faq.js and forgot to update the
+      copy here, Google would see structured data contradicting the visible
+      text, and the documented penalty is losing the rich result for the whole
+      page rather than the single question.
+
+      To change what the schema says, change the data file. There is nothing
+      to keep in sync.
+    -->
   </head>
   <body>
     <div id="root"></div>

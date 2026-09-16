@@ -51,5 +51,17 @@
 /sign.js
   Cache-Control: public, max-age=3600
 
-/favicon.png
+# Favicon set, generated from branding/favicon-v8-architect-h.png by
+# scripts/generate-icons.py. These are copies, not shared files — the
+# coming-soon site is a separate Worker with its own assets directory.
+/favicon.ico
+  Cache-Control: public, max-age=86400
+
+/favicon-16x16.png
+  Cache-Control: public, max-age=86400
+
+/favicon-32x32.png
+  Cache-Control: public, max-age=86400
+
+/apple-touch-icon.png
   Cache-Control: public, max-age=86400

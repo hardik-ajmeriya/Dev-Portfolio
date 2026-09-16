@@ -4,54 +4,108 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useRevealGroup } from '../../hooks/useReveal';
 import Magnetic from '../Magnetic';
+import { Field, TextInput, Select, SubmitButton } from '../form/FormControls';
+import RichTextArea from '../form/RichTextArea';
+import { PROJECT_TYPES, BUDGET_RANGES, TIMELINES } from '../../data/contactOptions';
 
 export const CONTACT_EMAIL = 'hardik.ajmeriya89@gmail.com';
 
-const schema = yup.object().shape({
-  name: yup.string().required('Name is required').min(2, 'Name must be at least 2 characters'),
-  email: yup.string().email('Invalid email').required('Email is required'),
-  subject: yup
+/**
+ * Where the enquiry email is sent from.
+ *
+ * Web3Forms is called straight from this browser, which is not a shortcut —
+ * it is the only way their API may be used. A server-to-server call is
+ * refused with a 403 ("this method is not allowed") unless you are on a paid
+ * plan AND have safelisted your server's IP address, and a Cloudflare Worker
+ * has no stable outbound IP to safelist even if you paid. So the Worker
+ * cannot send this email on our behalf; the browser has to.
+ *
+ * The access key being public is expected — every Web3Forms integration ships
+ * it in the page. It authorises delivery to one inbox and nothing else: it
+ * cannot read past submissions, change the destination, or touch the account.
+ * Abuse protection is the honeypot below, the timing checks, and Web3Forms'
+ * own spam filtering rather than key secrecy.
+ */
+const WEB3FORMS_ENDPOINT = 'https://api.web3forms.com/submit';
+const WEB3FORMS_ACCESS_KEY = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
+
+/** Seconds a browser must wait between successful sends. */
+const COOLDOWN_SECONDS = 45;
+/** Nobody legitimately completes this form faster than this. */
+const MIN_FILL_SECONDS = 3;
+
+const schema = yup.object({
+  name: yup
     .string()
-    .required('Subject is required')
-    .min(5, 'Subject must be at least 5 characters'),
-  budget: yup.string(),
-  // Honeypot. Must be in the schema or yupResolver strips it from `data`
-  // before the submit handler can check it. Never shown, never required.
-  botcheck: yup.string(),
+    .trim()
+    .required('Please enter your full name.')
+    .min(2, 'Please enter your full name.'),
+  email: yup
+    .string()
+    .trim()
+    .required('Please enter a valid business email.')
+    .email('Please enter a valid business email.'),
+  company: yup.string().trim(),
+  projectType: yup.string().required('Please select a project type.'),
+  budget: yup.string().required('Please select an estimated budget.'),
+  timeline: yup.string().required('Please select a project timeline.'),
   message: yup
     .string()
-    .required('Message is required')
-    .min(10, 'Message must be at least 10 characters'),
+    .trim()
+    .required('Please describe your project.')
+    .min(30, 'Project overview must contain at least 30 characters.'),
+  // Honeypot — must be declared or yupResolver strips it before submit.
+  botcheck: yup.string(),
 });
 
-const inputBase =
-  'w-full rounded-xl border border-line bg-white px-4 py-3.5 text-[15px] text-ink ' +
-  'placeholder:text-muted/70 outline-none transition focus:border-ink focus:ring-2 focus:ring-accent/25';
-
-function Field({ label, error, children }) {
+/** Animated confirmation shown in place of the form after a successful send. */
+function SuccessPanel({ onReset }) {
   return (
-    <label className="block">
-      <span className="mb-2 block font-mono text-[11px] uppercase tracking-[0.1em] text-muted">
-        {label}
-      </span>
-      {children}
-      {error ? <span className="mt-1.5 block text-[12px] text-red-600">{error}</span> : null}
-    </label>
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-line bg-white px-8 py-16 text-center"
+    >
+      <div className="animate-popIn mb-7 flex h-16 w-16 items-center justify-center rounded-full bg-accent2/10">
+        <svg viewBox="0 0 32 32" className="h-8 w-8 text-accent2" aria-hidden="true">
+          <path
+            d="M8 16.5 13.5 22 24 11"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            // Drawn on rather than popped in — the stroke animates to 0 offset.
+            style={{ strokeDasharray: 30, strokeDashoffset: 30 }}
+            className="animate-checkDraw"
+          />
+        </svg>
+      </div>
+
+      <h3 className="display mb-4 text-[clamp(1.6rem,3vw,2.2rem)]">Thank you.</h3>
+
+      <p className="max-w-[380px] text-[15px] leading-[1.7] text-muted">
+        Your project inquiry has been received. I&rsquo;ll personally review your requirements and
+        get back to you within one business day.
+      </p>
+
+      <button
+        type="button"
+        onClick={onReset}
+        className="mt-8 border-b border-line pb-1 text-[13px] text-muted transition-colors duration-300 hover:border-ink hover:text-ink"
+      >
+        Send another message
+      </button>
+    </div>
   );
 }
-
-/** Minimum seconds between two submissions from the same browser. */
-const COOLDOWN_SECONDS = 45;
-/** A human cannot meaningfully fill this form faster than this. */
-const MIN_FILL_SECONDS = 3;
 
 export default function Contact() {
   const groupRef = useRevealGroup();
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState(null); // { ok: boolean, message: string }
+  const [succeeded, setSucceeded] = useState(false);
+  const [formError, setFormError] = useState(null);
 
-  // Timestamps used for the two spam checks below. Refs, not state, so
-  // updating them never triggers a re-render.
   const mountedAt = useRef(Date.now());
   const lastSentAt = useRef(0);
 
@@ -60,66 +114,115 @@ export default function Contact() {
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm({ resolver: yupResolver(schema) });
+    watch,
+    setValue,
+  } = useForm({ resolver: yupResolver(schema), mode: 'onBlur' });
+
+  // Watched so the toolbar and character counter re-render as the
+  // Project Overview changes, including edits the toolbar makes itself.
+  const messageValue = watch('message');
 
   const onSubmit = async (data) => {
-    // --- spam check 1: honeypot ---------------------------------------
-    // `botcheck` is hidden from humans. Bots that blindly fill every field
-    // will set it, and Web3Forms rejects those server-side too. Bailing here
-    // saves the request and gives the bot no feedback either way.
+    setFormError(null);
+
+    // Honeypot tripped: report success so the bot learns nothing, send nothing.
     if (data.botcheck) {
-      setResult({ ok: true, message: "Message sent. I'll reply within 48 hours." });
+      setSucceeded(true);
       reset();
       return;
     }
 
-    // --- spam check 2: filled impossibly fast --------------------------
-    const secondsOnPage = (Date.now() - mountedAt.current) / 1000;
-    if (secondsOnPage < MIN_FILL_SECONDS) {
-      setResult({ ok: false, message: 'That was a bit quick — please try again.' });
+    if ((Date.now() - mountedAt.current) / 1000 < MIN_FILL_SECONDS) {
+      setFormError('That was submitted unusually fast. Please try again.');
       return;
     }
 
-    // --- spam check 3: cooldown between sends --------------------------
     const sinceLast = (Date.now() - lastSentAt.current) / 1000;
     if (lastSentAt.current && sinceLast < COOLDOWN_SECONDS) {
-      const wait = Math.ceil(COOLDOWN_SECONDS - sinceLast);
-      setResult({ ok: false, message: `Already sent — please wait ${wait}s before sending again.` });
+      setFormError(
+        `Your message was already sent. Please wait ${Math.ceil(COOLDOWN_SECONDS - sinceLast)} seconds before sending another.`
+      );
+      return;
+    }
+
+    // A missing key means the build never saw ../.env. Say that plainly
+    // rather than letting Web3Forms reject it as a malformed submission —
+    // the visitor's message would be lost either way, but only one of these
+    // tells you why.
+    if (!WEB3FORMS_ACCESS_KEY) {
+      setFormError(
+        import.meta.env.DEV
+          ? 'Dev: VITE_WEB3FORMS_ACCESS_KEY is missing. Add it to the repo-root .env and restart the dev server.'
+          : `The form is misconfigured. Please email me directly at ${CONTACT_EMAIL}.`
+      );
       return;
     }
 
     setSubmitting(true);
-    setResult(null);
+
+    const enquiry = {
+      name: data.name,
+      email: data.email,
+      company: data.company,
+      projectType: data.projectType,
+      budget: data.budget,
+      timeline: data.timeline,
+      message: data.message,
+    };
 
     try {
-      const accessKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
-
-      const formData = new FormData();
-      formData.append('access_key', accessKey || '');
-      formData.append('botcheck', '');
-      formData.append('name', data.name);
-      formData.append('email', data.email);
-      formData.append('replyto', data.email);
-      formData.append('from_name', 'Portfolio Contact Form');
-      formData.append('subject', data.subject);
-      formData.append('budget', data.budget || 'Not specified');
-      formData.append('message', data.message);
-
-      const response = await fetch('https://api.web3forms.com/submit', {
+      // 1. The email. This is the request the visitor's outcome depends on:
+      //    if Web3Forms accepts it, the message reached Hardik's inbox.
+      const response = await fetch(WEB3FORMS_ENDPOINT, {
         method: 'POST',
-        body: formData,
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_ACCESS_KEY,
+          subject: `New enquiry from ${data.name}${data.company ? ` (${data.company})` : ''}`,
+          from_name: 'hardikajmeriya.com',
+          replyto: data.email,
+          // Web3Forms honours a field literally named botcheck: any value at
+          // all and the submission is dropped on their side. Ours is already
+          // checked above, so this is belt and braces.
+          botcheck: data.botcheck || '',
+          ...enquiry,
+        }),
       });
-      const json = await response.json();
 
-      if (json.success) {
+      const json = await response.json().catch(() => null);
+
+      // Their rate limiting, not ours — the Worker's limiter no longer sits
+      // in front of this request, so this is the one that can actually fire.
+      if (response.status === 429) {
+        setFormError(
+          `Too many submissions from this connection. Please try again shortly, or email me directly at ${CONTACT_EMAIL}.`
+        );
+        return;
+      }
+
+      if (json?.success) {
         lastSentAt.current = Date.now();
-        setResult({ ok: true, message: "Message sent. I'll reply within 48 hours." });
+        setSucceeded(true);
         reset();
+
+        // 2. Store a copy for the /admin panel. Deliberately AFTER the
+        //    visitor has been told it worked, and deliberately not awaited:
+        //    the enquiry is already delivered by email, so a database that
+        //    is down, migrating or misconfigured must not turn a successful
+        //    send into a visible failure. Worst case we lose the archive
+        //    copy, never the message itself.
+        fetch('/api/enquiry', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ ...enquiry, botcheck: '' }),
+        }).catch(() => {});
       } else {
-        setResult({ ok: false, message: json.message || 'Something went wrong. Please try again.' });
+        setFormError(
+          json?.message || `Something went wrong. Please email me directly at ${CONTACT_EMAIL}.`
+        );
       }
     } catch {
-      setResult({ ok: false, message: 'Network error. Please try again later.' });
+      setFormError(`Network error. You can also email me directly at ${CONTACT_EMAIL}.`);
     } finally {
       setSubmitting(false);
     }
@@ -128,117 +231,207 @@ export default function Contact() {
   return (
     <section id="contact" ref={groupRef} className="border-t border-line">
       <div className="shell">
-        <div className="grid grid-cols-1 gap-14 py-32 lg:grid-cols-[1fr_1fr] lg:gap-24">
-          {/* Left: pitch */}
-          <div className="rv">
-            <div className="sec-num">06 / CONTACT</div>
-            <h2 className="display mt-4 text-[clamp(2.8rem,7vw,6rem)]">
+        <div className="grid grid-cols-1 gap-14 py-32 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
+          {/* ---------------- Left: pitch and direct details ---------------- */}
+          <div className="rv lg:sticky lg:top-32 lg:self-start">
+            <div className="sec-num">07 / CONTACT</div>
+            <h2 className="display mt-4 text-[clamp(2.8rem,6.5vw,5.5rem)]">
               Let&rsquo;s build
               <br />
               something.
             </h2>
 
-            <p className="mt-8 max-w-[420px] text-[17px] leading-[1.65] text-muted">
+            <p className="mt-8 max-w-[400px] text-[17px] leading-[1.65] text-muted">
               Tell me what you&rsquo;re trying to build and roughly when you need it. If I&rsquo;m
               not the right fit, I&rsquo;ll say so.
             </p>
 
-            <div className="mt-12 space-y-6">
+            <dl className="mt-12 space-y-7">
               <div>
-                <div className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted">
+                <dt className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted">
                   Email
-                </div>
-                <Magnetic strength={0.12}>
-                  <a
-                    href={`mailto:${CONTACT_EMAIL}`}
-                    className="mt-1.5 inline-block border-b border-ink pb-1 text-lg no-underline"
-                  >
-                    {CONTACT_EMAIL}
-                  </a>
-                </Magnetic>
+                </dt>
+                <dd className="mt-1.5">
+                  <Magnetic strength={0.12}>
+                    <a
+                      href={`mailto:${CONTACT_EMAIL}`}
+                      className="inline-block border-b border-ink pb-1 text-lg no-underline"
+                    >
+                      {CONTACT_EMAIL}
+                    </a>
+                  </Magnetic>
+                </dd>
               </div>
 
               <div>
-                <div className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted">
-                  Response time
-                </div>
-                <div className="mt-1.5 text-lg">Usually within 48 hours</div>
+                <dt className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted">
+                  Average response time
+                </dt>
+                <dd className="mt-1.5 text-lg">Within 24 hours</dd>
+                <dd className="text-[13px] text-muted">Monday &ndash; Saturday</dd>
               </div>
-            </div>
+
+              <div>
+                <dt className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted">
+                  Location
+                </dt>
+                <dd className="mt-1.5 text-lg">Rajkot, Gujarat, India</dd>
+                <dd className="text-[13px] text-muted">Available worldwide</dd>
+              </div>
+            </dl>
           </div>
 
-          {/* Right: form */}
-          <form onSubmit={handleSubmit(onSubmit)} noValidate className="rv space-y-5">
-            {/* Honeypot. Hidden from people and from screen readers, but a
-                scripted bot filling every input will trip it. Not a `hidden`
-                class — some bots skip those — but off-screen and inert. */}
-            <div aria-hidden="true" className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden">
-              <label>
-                Do not fill this in
-                <input {...register('botcheck')} type="text" tabIndex={-1} autoComplete="off" />
-              </label>
-            </div>
-
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="Your name" error={errors.name?.message}>
-                <input {...register('name')} className={inputBase} placeholder="Jane Doe" />
-              </Field>
-
-              <Field label="Email" error={errors.email?.message}>
-                <input
-                  {...register('email')}
-                  type="email"
-                  className={inputBase}
-                  placeholder="jane@company.com"
-                />
-              </Field>
-            </div>
-
-            <Field label="Subject" error={errors.subject?.message}>
-              <input
-                {...register('subject')}
-                className={inputBase}
-                placeholder="New web app for my business"
+          {/* ---------------- Right: the form ---------------- */}
+          <div className="rv">
+            {succeeded ? (
+              <SuccessPanel
+                onReset={() => {
+                  setSucceeded(false);
+                  mountedAt.current = Date.now();
+                }}
               />
-            </Field>
+            ) : (
+              <form onSubmit={handleSubmit(onSubmit)} noValidate>
+                {/* Honeypot: off-screen and hidden from assistive tech. */}
+                <div
+                  aria-hidden="true"
+                  className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden"
+                >
+                  <label>
+                    Do not fill this in
+                    <input {...register('botcheck')} type="text" tabIndex={-1} autoComplete="off" />
+                  </label>
+                </div>
 
-            <Field label="Budget range (optional)" error={errors.budget?.message}>
-              <select {...register('budget')} className={inputBase} defaultValue="">
-                <option value="">Prefer not to say</option>
-                <option>Under ₹50,000</option>
-                <option>₹50,000 – ₹1,50,000</option>
-                <option>₹1,50,000 – ₹4,00,000</option>
-                <option>₹4,00,000+</option>
-              </select>
-            </Field>
+                {/* A disabled fieldset disables every control inside it at
+                    once — no need to thread `disabled` through each input. */}
+                <fieldset disabled={submitting} className="space-y-1">
+                  <legend className="sr-only">Project enquiry</legend>
 
-            <Field label="What are you looking to build?" error={errors.message?.message}>
-              <textarea
-                {...register('message')}
-                rows={5}
-                className={`${inputBase} resize-y`}
-                placeholder="A short description of the project, who it's for, and any deadline you have in mind."
-              />
-            </Field>
+                  <div className="grid gap-x-5 sm:grid-cols-2">
+                    <Field id="name" label="Full name" error={errors.name?.message}>
+                      {(a11y) => (
+                        <TextInput
+                          {...register('name')}
+                          {...a11y}
+                          invalid={!!errors.name}
+                          placeholder="Jane Doe"
+                          autoComplete="name"
+                        />
+                      )}
+                    </Field>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full rounded-full bg-ink py-[18px] text-sm font-semibold text-paper
-                         transition duration-300 hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {submitting ? 'Sending…' : 'Send message'}
-            </button>
+                    <Field id="email" label="Business email" error={errors.email?.message}>
+                      {(a11y) => (
+                        <TextInput
+                          {...register('email')}
+                          {...a11y}
+                          type="email"
+                          invalid={!!errors.email}
+                          placeholder="jane@company.com"
+                          autoComplete="email"
+                        />
+                      )}
+                    </Field>
+                  </div>
 
-            {result ? (
-              <p
-                role="status"
-                className={`text-center text-sm ${result.ok ? 'text-accent2' : 'text-red-600'}`}
-              >
-                {result.message}
-              </p>
-            ) : null}
-          </form>
+                  <div className="grid gap-x-5 sm:grid-cols-2">
+                    <Field id="company" label="Company name" optional error={errors.company?.message}>
+                      {(a11y) => (
+                        <TextInput
+                          {...register('company')}
+                          {...a11y}
+                          invalid={!!errors.company}
+                          placeholder="Acme Inc."
+                          autoComplete="organization"
+                        />
+                      )}
+                    </Field>
+
+                    <Field id="projectType" label="Project type" error={errors.projectType?.message}>
+                      {(a11y) => (
+                        <Select {...register('projectType')} {...a11y} invalid={!!errors.projectType} defaultValue="">
+                          <option value="" disabled>
+                            Select a project type
+                          </option>
+                          {PROJECT_TYPES.map((t) => (
+                            <option key={t}>{t}</option>
+                          ))}
+                        </Select>
+                      )}
+                    </Field>
+                  </div>
+
+                  <div className="grid gap-x-5 sm:grid-cols-2">
+                    <Field id="budget" label="Estimated budget" error={errors.budget?.message}>
+                      {(a11y) => (
+                        <Select {...register('budget')} {...a11y} invalid={!!errors.budget} defaultValue="">
+                          <option value="" disabled>
+                            Select a budget range
+                          </option>
+                          {BUDGET_RANGES.map((b) => (
+                            <option key={b}>{b}</option>
+                          ))}
+                        </Select>
+                      )}
+                    </Field>
+
+                    <Field id="timeline" label="Project timeline" error={errors.timeline?.message}>
+                      {(a11y) => (
+                        <Select {...register('timeline')} {...a11y} invalid={!!errors.timeline} defaultValue="">
+                          <option value="" disabled>
+                            Select a timeline
+                          </option>
+                          {TIMELINES.map((t) => (
+                            <option key={t}>{t}</option>
+                          ))}
+                        </Select>
+                      )}
+                    </Field>
+                  </div>
+
+                  <Field id="message" label="Project overview" error={errors.message?.message}>
+                    {(a11y) => (
+                      <RichTextArea
+                        id="message"
+                        registration={register('message')}
+                        getValue={() => messageValue}
+                        setValue={(next) =>
+                          setValue('message', next, { shouldValidate: true, shouldDirty: true })
+                        }
+                        invalid={!!errors.message}
+                        minLength={30}
+                        rows={7}
+                        aria-invalid={a11y['aria-invalid']}
+                        aria-describedby={a11y['aria-describedby']}
+                        placeholder="Describe your project, goals, target users, desired features, preferred technologies (if any), and expected timeline."
+                      />
+                    )}
+                  </Field>
+
+                  <div className="pt-2">
+                    <SubmitButton loading={submitting}>Start your project</SubmitButton>
+                  </div>
+                </fieldset>
+
+                {formError ? (
+                  <p
+                    role="alert"
+                    className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-[13px] text-red-700"
+                  >
+                    {formError}
+                  </p>
+                ) : (
+                  <p className="mt-4 text-center text-[13px] text-muted">
+                    Prefer email? Write to{' '}
+                    <a href={`mailto:${CONTACT_EMAIL}`} className="text-ink underline">
+                      {CONTACT_EMAIL}
+                    </a>
+                  </p>
+                )}
+              </form>
+            )}
+          </div>
         </div>
       </div>
     </section>

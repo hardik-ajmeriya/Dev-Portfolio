@@ -19,6 +19,10 @@ export default function Magnetic({ children, strength = 0.25, className = '' }) 
     el.style.transform = `translate(${x}px, ${y}px)`;
   };
 
+
+
+
+
   const handleLeave = () => {
     const el = ref.current;
     if (el) el.style.transform = '';
