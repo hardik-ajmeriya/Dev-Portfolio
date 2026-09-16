@@ -1,193 +1,162 @@
 <div align="center">
 
-# Hardik Ajmeriya – Full-Stack Portfolio
+# Hardik Ajmeriya — Full-Stack Portfolio
 
-Modern, performance‑optimized portfolio built with React, Vite, Tailwind CSS, Framer Motion, and Web3Forms. Focused on clean UI/UX.
+A prerendered, single-page React portfolio with a Cloudflare Workers backend:
+a validated contact form backed by D1 and Resend, a private admin panel for
+enquiries, and SEO/AI-search structured data baked in at build time.
 
-![Stack](https://img.shields.io/badge/React-18-61dafb?logo=react&style=for-the-badge) ![Vite](https://img.shields.io/badge/Vite-Build-646cff?logo=vite&style=for-the-badge) ![Tailwind](https://img.shields.io/badge/Tailwind-CSS-38bdf8?logo=tailwindcss&style=for-the-badge) ![Framer Motion](https://img.shields.io/badge/Framer-Motion-black?logo=framer&style=for-the-badge) ![Web3Forms](https://img.shields.io/badge/Web3Forms-API-2563eb?style=for-the-badge)
+![React](https://img.shields.io/badge/React-18-61dafb?logo=react&style=for-the-badge) ![Vite](https://img.shields.io/badge/Vite-Build-646cff?logo=vite&style=for-the-badge) ![Tailwind](https://img.shields.io/badge/Tailwind-CSS-38bdf8?logo=tailwindcss&style=for-the-badge) ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-f38020?logo=cloudflare&style=for-the-badge) ![D1](https://img.shields.io/badge/Cloudflare-D1-f38020?logo=cloudflare&style=for-the-badge)
 
 </div>
 
-## Features
+## Status
 
-- Responsive, mobile‑first design (Tailwind + optimized layout)
-- Dark / light theme context with persistence
-- Smooth page transitions & micro‑interactions (Framer Motion)
-- Smooth page transitions & micro‑interactions (Framer Motion)
-- Project status indicator with clean "Under Development" badge
-- Route‑level code splitting via `React.lazy` + `Suspense` spinner
-- Lazy‑loaded non‑critical images (`loading="lazy"`, `decoding="async"`)
-- Accessible animations (prefers‑reduced‑motion respected)
-- Web3Forms contact form (no backend server required) with validation & success/error states
-- SEO ready meta title & description
-- Auto scroll to top on route change (better navigation UX)
-- Favicon support (`/public/images/favicon.png`)
+**Pre-launch.** `hardikajmeriya.com` currently serves a coming-soon holding
+page (`coming-soon/`, a separate Worker); the real site (`app/`) is built and
+deployable but not yet swapped onto the domain. See
+[LAUNCH-CHECKLIST.md](LAUNCH-CHECKLIST.md) for what's still open.
 
-## Tech Stack
+## Tech stack
 
-| Area            | Tools                                         |
-| --------------- | --------------------------------------------- |
-| Framework       | React 18 + Vite                               |
-| Styling         | Tailwind CSS + custom gradients               |
-| Animations      | Framer Motion                                 |
-| Forms           | React Hook Form + Yup (advanced contact page) |
-| Icons           | lucide-react                                  |
-| Email / Contact | Web3Forms API (serverless)                    |
-| State / Theme   | React Context                                 |
-| Tooling         | npm scripts                                   |
+| Area | Tools |
+| --- | --- |
+| Framework | React 18 + Vite, single page (no router — anchor-scrolled sections) |
+| Styling | Tailwind CSS, self-hosted fonts (`@fontsource`: Bricolage Grotesque, Inter, JetBrains Mono) |
+| 3D | three.js (hero scene, skipped on mobile) |
+| Forms | React Hook Form + Yup, both client- and server-side validated |
+| Hosting | Cloudflare Workers (static assets + one Worker script), not Vercel/Netlify |
+| Backend | Worker API route (`/api/enquiry`, `/admin`) — see below |
+| Database | Cloudflare D1 (`hardik-enquiries`) — enquiries + rate-limit state |
+| Email | Resend (owner notification + client auto-reply, both server-side) |
+| Auth | Cloudflare Access, gating the whole `admin.hardikajmeriya.com` subdomain |
+| SEO | SSR prerender (`entry-server.jsx` + `prerender.js`) so crawlers get full HTML; generated structured data (`scripts/build-schema.mjs`) |
+| Tooling | npm scripts, ESLint, plain `node *.test.mjs` for tests (no test runner dependency) |
 
-> Note: Project uses plain JavaScript (`.jsx`) – not TypeScript.
+> Plain JavaScript (`.jsx`) throughout — not TypeScript, despite `typescript`
+> appearing in devDependencies (editor tooling only).
 
-## Project Structure (key parts)
+## How the contact form actually works
+
+The form doesn't call any third-party API directly from the browser. It posts
+same-origin to `/api/enquiry`, which the Worker (`app/worker/index.js`)
+handles:
+
+1. Re-validates everything server-side (never trusts the client).
+2. Checks a D1-backed rate limit (`worker/rateLimit.js`).
+3. Writes the enquiry to D1.
+4. Emails the notification to Hardik via Resend, then the client auto-reply —
+   both server-side, so the Resend key never reaches the browser.
+
+The admin panel (`worker/admin.js`, `worker/adminPage.js`) reads that D1 table
+at `admin.hardikajmeriya.com/admin`: status tracking, private notes,
+follow-up dates, search, CSV export. Full details in
+[AUTOREPLY.md](AUTOREPLY.md) and [ADMIN.md](ADMIN.md).
+
+## Project structure (key parts)
 
 ```
-src/
-  App.jsx              # Routing + Suspense + page transitions
-  main.jsx             # App bootstrap
-  index.css            # Tailwind & global scroll behavior
-  contexts/ThemeContext.jsx
-  components/Navbar.jsx / Footer.jsx
-  pages/
-    Home.jsx           # Hero, skills, animated sections
-    About.jsx          # Journey, quote, skills display
-    Projects.jsx       # Filterable project gallery
-    Contact.jsx        # Web3Forms integrated form
-public/
-  images/              # Static assets (Me.png, project images, favicon.png)
+app/
+  src/
+    entry-server.jsx        # SSR entry, used only at build time by prerender.js
+    pages/Home.jsx           # The single page
+    components/sections/     # Hero, About, Work, Services, Tech, Process,
+                              # Stats, Faq, Ticker, Contact
+    components/form/         # Shared form controls used by Contact
+    data/                    # projects, services, tech, faq, seo, contactOptions
+  worker/
+    index.js                 # POST /api/enquiry — validation, D1, Resend
+    admin.js, adminPage.js   # Private enquiries dashboard
+    access.js                 # Cloudflare Access verification
+    rateLimit.js              # D1-backed rate limiting
+    emails.js                 # Owner notification + client auto-reply bodies
+  migrations/                # D1 schema migrations
+  seeds/                     # Local D1 dev seed data
+  public/                    # Static assets, copied verbatim into the build
+coming-soon/                 # Separate Worker: the holding page live today
+scripts/                     # build-schema, optimise-images, generate-icons,
+                              # md-to-pdf, preflight (pre-launch checks)
+assets-original/             # Full-size source images (gitignored, not deployed)
+branding/                    # Brand masters (tracked — needed to regenerate favicons)
 ```
 
-## Project Status Indicator
+## Getting started
 
-A minimal, professional status badge can be shown for projects that are still in progress. It appears at the bottom‑right of the project card and keeps a single‑line layout.
-
-- Fields on each project object:
-  - **status:** string (e.g., "Under Development", "Completed")
-  - **isUnderDevelopment:** boolean
-
-- UI behavior when `isUnderDevelopment` is true:
-  - A small yellow warning‑style badge with a ⚠ icon displays at the bottom‑right of the card.
-  - The "Live Demo" button is disabled.
-  - The GitHub "Code" button is hidden if `githubUrl` is empty.
-
-- Where it lives: see [src/pages/Projects.jsx](src/pages/Projects.jsx).
-
-### Example project entry
-
-```js
-{
-  id: 5,
-  title: "DCPVAS – CI/CD Pipeline Visualizer with AI Failure Analysis",
-  description: "…",
-  image: "/images/dcpvas.png",
-  techStack: ["Jenkins", "Node.js", "React", "Vite", "SSE"],
-  githubUrl: "",          // empty hides the Code button
-  liveUrl: "",            // demo stays disabled while in development
-  status: "Under Development",
-  isUnderDevelopment: true,
-  category: "devops",
-  featured: false,
-}
-```
-
-## Environment Variables
-
-Create `.env` in project root:
-
-```env
-VITE_WEB3FORMS_ACCESS_KEY=YOUR-WEB3FORMS-UUID-KEY
-```
-
-Access inside React:
-
-```js
-import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
-```
-
-Make sure the key is a valid UUID and mapped to your email (e.g. `hardik.ajmeriya89@gmail.com`) in the Web3Forms dashboard.
-
-## Getting Started
-
-```bash
-git clone <repo-url>
-cd Hardik_Dev_Portfolio/app
-npm install
-npm run dev
-```
-
-Visit: `http://localhost:5173`
-
-### Build for Production
+Two terminals — the form needs both running:
 
 ```bash
 cd app
-npm run build
-npm run preview    # Serve dist locally for verification
+npm install
+
+# terminal 1 — the Worker API on :8787
+npm run dev:api
+
+# terminal 2 — Vite with hot reload on :5173, proxies /api to the Worker
+npm run dev
 ```
 
-## Contact Form (Web3Forms)
+Visit `http://localhost:5173`. Submitting the form with only `npm run dev`
+running returns Vite's HTML instead of JSON — that's the expected symptom of
+forgetting terminal 1.
 
-The form posts directly to Web3Forms – no custom backend required.
+### Local database
 
-Flow:
+```bash
+cd app
+npm run db:migrate:local   # apply migrations to local D1
+npm run seed:local         # optional: sample enquiries for the admin panel
+```
 
-1. User submits form.
-2. `Contact.jsx` creates `FormData` with `access_key`, `name`, `email`, `subject`, `message`, `replyto`.
-3. POST to `https://api.web3forms.com/submit`.
-4. Success → show green message; failure → show error.
+### Build for production
 
-If you rotate your access key just update `.env` and restart dev server.
+```bash
+cd app
+npm run build      # client build + SSR prerender
+npm run preview    # serve dist/ locally for verification
+```
 
-## Validation
+## Environment / secrets
 
-Yup + React Hook Form used on the full contact page to enforce required fields, minimum lengths, and email format. Simple fallback validation is embedded for Web3Forms example usage.
+No `VITE_`-prefixed env vars are needed — nothing in the client bundle talks
+to a third-party API directly. The Worker needs one secret:
 
-## Customization
+```bash
+cd app
+npx wrangler secret put RESEND_API_KEY     # production
+```
 
-- Replace profile image: `public/images/Me.png` & update alt text.
-- Edit hero roles / skills in `Home.jsx` (`techStack` array).
-- Update journey text & quote in `About.jsx`.
-- Add or modify projects in `Projects.jsx` (`projects` array).
-- Change gradients / branding in `tailwind.config.js`.
+For local dev, copy `app/.dev.vars.example` to `app/.dev.vars` and fill in the
+same key — that file is read by `wrangler dev`, is gitignored, and must never
+be committed with a real value (`.dev.vars.example` stays blank on purpose).
 
-## Performance & UX Optimizations
+## Testing
 
-- Route code splitting reduces initial bundle.
-- Critical hero image kept eager; other images lazy.
-- Smooth scrolling (`html { scroll-behavior: smooth }`).
-- Auto-scroll to top on navigation to avoid persistent scroll position.
-- Reduced-motion media query disables long animations if user prefers.
+Each test file runs standalone with plain Node — no test runner dependency:
 
-## Accessibility Notes
+```bash
+node app/worker/index.test.mjs
+node app/worker/admin.test.mjs
+node app/worker/rateLimit.test.mjs
+node coming-soon/countdown.test.mjs
+node scripts/schema.test.mjs
+```
 
-- High color contrast in dark theme.
-- Focus states preserved on interactive elements.
-- Motion reduced for users with `prefers-reduced-motion`.
-- Semantic headings (single H1 per page).
+## Deployment
 
-## Deployment (Vercel / Netlify Recommended)
+Cloudflare Workers, via `wrangler`. Full walkthrough — account hardening,
+connecting the repo for auto-deploy on push, the coming-soon → real-site
+domain swap — in [DEPLOY.md](DEPLOY.md).
 
-1. Set environment variable `VITE_WEB3FORMS_ACCESS_KEY` in platform dashboard.
-2. Deploy; Vite will expose the key at build time.
-3. Verify contact form by sending a test message.
+```bash
+cd app
+npm run deploy      # build + wrangler deploy
+```
 
-## Optional Cleanup
+## Further reading
 
-If you are not using the legacy `backend/` folder (Web3Forms removes need for a custom mail API):
-
-1. Delete the folder.
-2. Remove unused dependencies from `package.json` (Express, etc. if present).
-
-## Future Enhancements
-
-- Blog / articles (MDX)
-- Metrics dashboard (GitHub contributions, AWS costs, etc.)
-- Light performance report widget (Lighthouse score)
-- Global search across sections
-- Tag‑based project filtering UX improvements
-- Toast notifications for form status
-
-## Security Considerations
-
-- Do not commit real secrets other than public Web3Forms access key.
-- Rotate access key periodically in Web3Forms dashboard.
-- Validate user input before adding any backend endpoints in future.
+- [AUTOREPLY.md](AUTOREPLY.md) — the contact form's Worker + Resend + D1 flow, failure modes, editing the email copy
+- [ADMIN.md](ADMIN.md) — the private enquiries dashboard and Cloudflare Access setup
+- [SECURITY.md](SECURITY.md) — what actually protects the site, and what to configure in the Cloudflare dashboard
+- [SEO.md](SEO.md) — the prerender/structured-data approach for search and AI-search visibility
+- [DEPLOY.md](DEPLOY.md) — the full deploy and domain-swap walkthrough
+- [LAUNCH-CHECKLIST.md](LAUNCH-CHECKLIST.md) — current pre-launch blockers
