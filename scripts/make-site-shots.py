@@ -35,9 +35,14 @@ HOW TO CAPTURE (Chrome)
   Desktop:  F12 -> device toolbar (Ctrl+Shift+M) -> "Responsive", set 1440 x 900
             -> Ctrl+Shift+P -> type "capture screenshot" -> Enter
   Mobile:   same, pick iPhone 14 Pro -> same capture command
-  Full page: use "Capture full size screenshot" instead — but crop it down
-            afterwards. A 1440x6000 strip shrinks to an unreadable ribbon in a
-            portfolio grid; one screenful reads, a whole page does not.
+  DO NOT use "Capture full size screenshot". This site is ~20,000px tall, so
+  at 2x device pixel ratio that returns a 2880x40000 file — and Upwork rejects
+  anything over 4000x4000. One screenful reads in a portfolio grid; a whole
+  page shrinks to an unreadable ribbon anyway.
+
+  If you do capture one, this script no longer breaks on it: it detects the
+  strip, crops to the top screenful and says so. The output is always 1200x900,
+  which is comfortably inside every platform's cap.
 
   Set the browser zoom to 100% first. At 110% the text renders soft and it is
   visible once the image is scaled.
@@ -136,7 +141,20 @@ def build(src: Path, F) -> Image.Image:
     card = Image.new("RGB", (W, H), PAPER)
     d = ImageDraw.Draw(card)
     im = Image.open(src).convert("RGB")
-    portrait = im.height > im.width
+
+    # Phone or long page?
+    #
+    # The first version asked `height > width`, which is true of a phone
+    # capture AND of a full-page desktop capture. This site is ~20,000px tall,
+    # so a "Capture full size screenshot" comes back at 2880x40000 — and the
+    # phone branch scaled it to fit the frame HEIGHT, rendering it 48px wide.
+    # A sliver, not an image.
+    #
+    # Phone screens land around 0.46 (393x852). Anything outside this band is
+    # either a normal screenshot or a full-page strip; both are handled by
+    # scaling to width and cropping from the top.
+    ratio = im.width / im.height
+    portrait = 0.35 <= ratio <= 0.70
 
     bar_h = 150
     area_w = W - PAD * 2
@@ -212,11 +230,26 @@ def main() -> None:
 
         OUT.mkdir(exist_ok=True)
         for s in shots:
+            src_im = Image.open(s)
+            sw, sh = src_im.size
+            r = sw / sh
+            kind = "phone" if 0.35 <= r <= 0.70 else ("long page" if sh > sw * 1.6 else "desktop")
+
+            # Upwork rejects anything over 4000x4000. The output is always
+            # 1200x900 so it can never trip that, but a 40,000px input is a
+            # sign the capture was "full size" rather than one screenful, and
+            # only the top of it will survive the crop.
+            note = ""
+            if max(sw, sh) > 4000:
+                note = f"   (input {sw}x{sh} — full-page capture, cropping to the top screenful)"
+
             dst = OUT / f"{s.stem}.png"
-            img = build(s, F)
-            img.save(dst, optimize=True)
-            kind = "phone" if Image.open(s).height > Image.open(s).width else "desktop"
-            print(f"  {kind:8} {caption_from(s):24} -> {dst.name}")
+            build(s, F).save(dst, optimize=True)
+            print(f"  {kind:10} {caption_from(s):24} -> {dst.name}{note}")
+
+            out_im = Image.open(dst)
+            if max(out_im.size) > 4000:
+                print(f"    WARNING: output is {out_im.size[0]}x{out_im.size[1]}, over the 4000px platform cap")
 
     print(f"\n  {OUT.relative_to(ROOT)}/ — 1200x900 PNG, upload in filename order")
 
