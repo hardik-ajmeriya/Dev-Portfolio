@@ -100,3 +100,8 @@ assets-original/
 # Marketplace thumbnails — generated from app/public/images by
 # scripts/make-thumbnails.py. Regenerate rather than commit.
 thumbnails/
+
+# Raw screenshots in, framed portfolio images out. Both regenerable.
+captures/*
+!captures/README.txt
+site-shots/
