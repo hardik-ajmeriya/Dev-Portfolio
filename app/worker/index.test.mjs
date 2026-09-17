@@ -76,7 +76,7 @@ await t('called Resend twice (owner, then client)', async()=>{
 });
 await t('owner email sent to Hardik, reply-to the enquirer', async()=>{
   const b=JSON.parse(calls[0].body);
-  eq(b.to[0],'hardik.ajmeriya89@gmail.com','to');
+  eq(b.to[0],'hello@hardikajmeriya.com','to');
   eq(b.reply_to,'priya@northwind.example','reply_to');
   if(!b.html.includes('Priya Sharma')) throw new Error('name missing from body');
   for(const field of [valid.email, valid.company, valid.projectType, valid.budget, valid.timeline])
@@ -85,7 +85,7 @@ await t('owner email sent to Hardik, reply-to the enquirer', async()=>{
 await t('client auto-reply sent to the enquirer, reply-to Hardik', async()=>{
   const b=JSON.parse(calls[1].body);
   eq(b.to[0],'priya@northwind.example','to');
-  eq(b.reply_to,'hardik.ajmeriya89@gmail.com','reply_to');
+  eq(b.reply_to,'hello@hardikajmeriya.com','reply_to');
   if(!b.html || !b.text) throw new Error('missing html/text part');
 });
 

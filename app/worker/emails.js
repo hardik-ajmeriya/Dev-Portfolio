@@ -10,7 +10,7 @@
 const BRAND = {
   name: 'Hardik Ajmeriya',
   site: 'https://hardikajmeriya.com',
-  email: 'hardik.ajmeriya89@gmail.com',
+  email: 'hello@hardikajmeriya.com',
   paper: '#f4f4f1',
   ink: '#0b0b0d',
   muted: '#6b6b73',

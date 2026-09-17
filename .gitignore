@@ -96,3 +96,7 @@ coverage/
 # of source asset that must survive a fresh clone — regenerating the favicon
 # set from the original artwork is impossible if the artwork is untracked.
 assets-original/
+
+# Marketplace thumbnails — generated from app/public/images by
+# scripts/make-thumbnails.py. Regenerate rather than commit.
+thumbnails/

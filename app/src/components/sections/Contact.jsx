@@ -8,7 +8,7 @@ import { Field, TextInput, Select, SubmitButton } from '../form/FormControls';
 import RichTextArea from '../form/RichTextArea';
 import { PROJECT_TYPES, BUDGET_RANGES, TIMELINES } from '../../data/contactOptions';
 
-export const CONTACT_EMAIL = 'hardik.ajmeriya89@gmail.com';
+export const CONTACT_EMAIL = 'hello@hardikajmeriya.com';
 
 /**
  * Where the enquiry email is sent from.
@@ -28,6 +28,35 @@ export const CONTACT_EMAIL = 'hardik.ajmeriya89@gmail.com';
  */
 const WEB3FORMS_ENDPOINT = 'https://api.web3forms.com/submit';
 const WEB3FORMS_ACCESS_KEY = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
+
+/**
+ * WHATSAPP
+ * ---------------------------------------------------------------
+ * Digits only, country code first, no +, no spaces — that is the format
+ * wa.me requires and it fails silently with anything else.
+ */
+const WHATSAPP_NUMBER = '919574255382';
+const WHATSAPP_DISPLAY = '+91 95742 55382';
+
+const waLink = (text) =>
+  `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+
+/**
+ * The three of these exist because the free WhatsApp Business app cannot do
+ * what people assume it can: there are no keyword auto-replies and no tappable
+ * button menus, only a greeting message and an away message. Both of those
+ * need the paid Business API.
+ *
+ * So the menu lives here instead, on the side we control. Each option opens
+ * WhatsApp with its first message already written, which means an enquiry
+ * arrives having already said what it is — the same sorting a bot menu would
+ * do, for nothing, and without making anyone talk to a bot first.
+ */
+const WHATSAPP_INTENTS = [
+  { label: 'Start a project', text: "Hi Hardik, I'd like to discuss a new project." },
+  { label: 'Check availability', text: 'Hi Hardik, are you free for work right now?' },
+  { label: 'Something else', text: 'Hi Hardik,' },
+];
 
 /** Seconds a browser must wait between successful sends. */
 const COOLDOWN_SECONDS = 45;
@@ -251,7 +280,34 @@ export default function Contact() {
                 <dt className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted">
                   Email
                 </dt>
-                <dd className="mt-1.5">
+                <dd className="mt-1.5 flex items-center gap-2.5">
+                  {/* Email carries an icon only so its text baseline starts at
+                      the same x as the WhatsApp number below it. Without this
+                      the two links sit 28px apart and the column looks broken. */}
+                  <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    className="h-[18px] w-[18px] shrink-0 text-muted"
+                  >
+                    <rect
+                      x="2.75"
+                      y="5.25"
+                      width="18.5"
+                      height="13.5"
+                      rx="2.25"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                    />
+                    <path
+                      d="m3.5 7.5 8.5 5.75L20.5 7.5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                   <Magnetic strength={0.12}>
                     <a
                       href={`mailto:${CONTACT_EMAIL}`}
@@ -260,6 +316,57 @@ export default function Contact() {
                       {CONTACT_EMAIL}
                     </a>
                   </Magnetic>
+                </dd>
+              </div>
+
+              <div>
+                <dt className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted">
+                  WhatsApp
+                </dt>
+                <dd className="mt-1.5 flex items-center gap-2.5">
+                  {/* A plain speech bubble, not the WhatsApp mark. The real one
+                      is a trademark, and redrawing a brand logo by hand gets
+                      both the law and the curves wrong. This also stays
+                      monochrome, which the green badge never could. */}
+                  <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    className="h-[18px] w-[18px] shrink-0 text-muted"
+                  >
+                    <path
+                      d="M21 12a8.5 8.5 0 0 1-12.3 7.6L3.5 21l1.4-5.2A8.5 8.5 0 1 1 21 12z"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <Magnetic strength={0.12}>
+                    <a
+                      href={waLink('Hi Hardik, ')}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block border-b border-ink pb-1 text-lg no-underline"
+                    >
+                      {WHATSAPP_DISPLAY}
+                    </a>
+                  </Magnetic>
+                </dd>
+                {/* The message is pre-written, so the first thing in the inbox
+                    already says what the enquiry is about. */}
+                <dd className="mt-3.5 flex flex-wrap gap-2">
+                  {WHATSAPP_INTENTS.map((intent) => (
+                    <a
+                      key={intent.label}
+                      href={waLink(intent.text)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="pill no-underline transition duration-300 hover:border-ink hover:text-ink"
+                    >
+                      {intent.label}
+                    </a>
+                  ))}
                 </dd>
               </div>
 

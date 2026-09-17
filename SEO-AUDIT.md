@@ -252,7 +252,7 @@ real problem.**
 
 | Where | Address |
 | --- | --- |
-| Site, schema, llms.txt, email signature | `hardik.ajmeriya89@gmail.com` |
+| Site, schema, llms.txt, email signature | `hello@hardikajmeriya.com` |
 | GitHub profile README | `hardik.ajmeriya12@gmail.com` — plus a live `hardik@example.com` placeholder |
 | Cloudflare / admin | `hardikpt95@gmail.com` |
 | Resend `from:` | `hello@hardikajmeriya.com` |

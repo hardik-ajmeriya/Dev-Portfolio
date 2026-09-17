@@ -26,7 +26,7 @@ export const PERSON = {
   givenName: 'Hardik',
   familyName: 'Ajmeriya',
   jobTitle: 'Full-Stack Developer & Cloud Engineer',
-  email: 'hardik.ajmeriya89@gmail.com',
+  email: 'hello@hardikajmeriya.com',
   image: `${SITE_URL}/images/Me.webp`,
   description:
     'Full-stack developer who builds MERN applications and deploys them to production on AWS with Docker, Kubernetes, Terraform and CI/CD pipelines.',

@@ -3,7 +3,7 @@
   Developer:  Hardik Ajmeriya
   Role:       Full-stack developer and cloud engineer
   Site:       https://hardikajmeriya.com
-  Contact:    hardik.ajmeriya89@gmail.com
+  Contact:    hello@hardikajmeriya.com
   GitHub:     https://github.com/hardik-ajmeriya
   LinkedIn:   https://www.linkedin.com/in/hardik-ajmeriya
   Location:   Rajkot, Gujarat, India

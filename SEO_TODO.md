@@ -61,12 +61,12 @@ You currently publish three:
 
 | Where | Address |
 | --- | --- |
-| Site, schema, llms.txt | `hardik.ajmeriya89@gmail.com` |
+| Site, schema, llms.txt | `hello@hardikajmeriya.com` |
 | GitHub README | `hardik.ajmeriya12@gmail.com` + a `hardik@example.com` placeholder |
 | Cloudflare / admin | `hardikpt95@gmail.com` |
 
 - [ ] Decide which is the business address
-- [ ] If it is **not** `hardik.ajmeriya89@gmail.com`, change `PERSON.email` in `app/src/data/seo.js` — one line, everything else is derived from it
+- [ ] If it is **not** `hello@hardikajmeriya.com`, change `PERSON.email` in `app/src/data/seo.js` — one line, everything else is derived from it
 - [ ] Update the GitHub README to match
 
 > Keep `hardikpt95@gmail.com` for Cloudflare and the admin panel. That one is infrastructure, not a public contact, and it is fine for it to differ.

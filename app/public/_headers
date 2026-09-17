@@ -56,8 +56,30 @@
 
 # Vite fingerprints these filenames with a content hash, so they can be
 # cached hard and forever — a new build produces new filenames.
+#
+# Access-Control-Allow-Origin is here because Vite stamps a `crossorigin`
+# attribute onto the stylesheet, the module script and the font preloads:
+#
+#   <link rel="stylesheet" crossorigin href="/assets/index-….css">
+#   <script type="module" crossorigin src="/assets/index-….js">
+#
+# That makes the browser fetch them in CORS mode. A normal browser treats a
+# same-origin CORS-mode request as same-origin and loads them without any
+# header at all, which is why this was invisible for months.
+#
+# In-app browsers — Instagram, Facebook, LinkedIn, X — do not always give the
+# document a normal origin, and when they don't, those three requests become
+# cross-origin and are rejected for want of this header. The failure looks
+# alarming and is easy to misread: the HTML renders, the <img> tags render
+# (they carry no crossorigin attribute, so they are never in CORS mode), and
+# the CSS and JS silently do not. You get raw unstyled HTML with pictures.
+#
+# These are public, non-credentialed build artifacts — no cookies, no user
+# data — so allowing any origin to read them costs nothing. It is also what
+# the font preloads needed anyway: fonts are ALWAYS fetched in CORS mode.
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *
 
 # Images keep stable filenames, so cache for a day rather than a year.
 /images/*

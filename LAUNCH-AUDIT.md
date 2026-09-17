@@ -93,7 +93,7 @@ being caught omitting it costs a lot.
 
 | Where | Address |
 | --- | --- |
-| Portfolio + `llms.txt` + JSON-LD | `hardik.ajmeriya89@gmail.com` |
+| Portfolio + `llms.txt` + JSON-LD | `hello@hardikajmeriya.com` |
 | GitHub profile README | `hardik.ajmeriya12@gmail.com`, and a `hardik@example.com` placeholder |
 | Admin panel / Cloudflare | `hardikpt95@gmail.com` |
 
