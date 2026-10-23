@@ -48,6 +48,23 @@
 
 export const projects = [
   {
+    id: 'varakh',
+    title: 'VARAKH — Indian Sweets Brand Landing Page',
+    description:
+      'A product landing page for an original Indian sweets brand. The hero swaps four sweets, each with its own colour palette, by click, auto-play or scroll; one toggle switches the whole page, prices included, between English and Gujarati; and a pinned gift box opens and fills itself compartment by compartment as you scroll.',
+    images: [
+      { src: '/images/varakh.webp', caption: 'Hero and product switcher' },
+      { src: '/images/varakh-gujarati.webp', caption: 'One-click Gujarati' },
+      { src: '/images/varakh-gift-box.webp', caption: 'Gift box that fills on scroll' },
+      { src: '/images/varakh-process.webp', caption: 'How it is made timeline' },
+    ],
+    browser: 'varakh.in',
+    tech: ['Next.js', 'TypeScript', 'Tailwind CSS', 'Framer Motion', 'Lenis', 'i18n (EN / GU)'],
+    githubUrl: 'https://github.com/hardik-ajmeriya/varakh',
+    liveUrl: 'https://varakh.vercel.app/',
+    status: 'Completed',
+  },
+  {
     id: 'aurora-fitness',
     title: 'Aurora — Strength & Movement Studio',
     description:
@@ -159,7 +176,7 @@ export const projects = [
 ];
 
 export const stats = [
-  { value: 9, suffix: '', label: 'Projects built end-to-end' },
+  { value: 10, suffix: '', label: 'Projects built end-to-end' },
   { value: 18, suffix: '+', label: 'CI/CD pipelines configured' },
   { value: 20, suffix: '+', label: 'Tools & services used' },
   { value: null, display: '<24h', label: 'Typical reply time' },
