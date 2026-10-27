@@ -11,6 +11,16 @@ const links = [
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  // Solid bar once the page has scrolled. The old transparent mix-blend-difference
+  // bar let section headings show through the logo ("Project index" under
+  // "Hardik Ajmeriya"); a real background keeps the nav readable on any section.
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   // Lock body scroll while the mobile menu is open.
   useEffect(() => {
@@ -34,21 +44,29 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="fixed inset-x-0 top-0 z-50 text-white mix-blend-difference">
-        <div className="mx-auto flex max-w-shell items-center justify-between px-6 py-6 md:px-10">
+      <nav
+        className={`fixed inset-x-0 top-0 z-50 border-b text-ink transition-[background-color,border-color] duration-300 ${
+          scrolled || open ? 'border-line bg-paper' : 'border-transparent bg-transparent'
+        }`}
+      >
+        <div
+          className={`mx-auto flex max-w-shell items-center justify-between px-6 transition-[padding] duration-300 md:px-10 ${
+            scrolled ? 'py-4' : 'py-6'
+          }`}
+        >
           <a href="#top" className="font-display text-[19px] font-extrabold tracking-[-0.03em]">
             Hardik Ajmeriya
           </a>
 
           <div className="hidden gap-9 md:flex">
             {links.map((l) => (
-              <a key={l.href} href={l.href} className="text-[13px] font-medium tracking-[0.02em]">
+              <a key={l.href} href={l.href} className="text-[13px] font-medium tracking-[0.02em] transition-colors hover:text-accent">
                 {l.label}
               </a>
             ))}
           </div>
 
-          <a href="#contact" className="hidden text-[13px] font-medium md:block">
+          <a href="#contact" className="hidden text-[13px] font-medium transition-colors hover:text-accent md:block">
             Start a project →
           </a>
 
@@ -65,17 +83,17 @@ export default function Navbar() {
             className="-mr-2.5 flex h-11 w-11 flex-col items-center justify-center gap-[5px] md:hidden"
           >
             <span
-              className={`block h-[1.5px] w-7 bg-white transition-transform duration-300 ${
+              className={`block h-[1.5px] w-7 bg-ink transition-transform duration-300 ${
                 open ? 'translate-y-[6.5px] rotate-45' : ''
               }`}
             />
             <span
-              className={`block h-[1.5px] w-7 bg-white transition-opacity duration-300 ${
+              className={`block h-[1.5px] w-7 bg-ink transition-opacity duration-300 ${
                 open ? 'opacity-0' : ''
               }`}
             />
             <span
-              className={`block h-[1.5px] w-7 bg-white transition-transform duration-300 ${
+              className={`block h-[1.5px] w-7 bg-ink transition-transform duration-300 ${
                 open ? '-translate-y-[6.5px] -rotate-45' : ''
               }`}
             />

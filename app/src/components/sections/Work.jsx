@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { projects, projectImages } from '../../data/projects';
 import { useRevealGroup } from '../../hooks/useReveal';
 import Magnetic from '../Magnetic';
+import ProjectIndex from './ProjectIndex';
 
 /**
  * Thumbnail strip under a project's screenshot.
@@ -245,6 +246,9 @@ function TiltWindow({ images, browser, title }) {
 
 export default function Work() {
   const groupRef = useRevealGroup();
+  // Featured projects get the full showcase; everything else goes in the compact index.
+  const featured = projects.filter((p) => p.featured);
+  const rest = projects.filter((p) => !p.featured);
 
   return (
     <section id="work" ref={groupRef}>
@@ -259,19 +263,19 @@ export default function Work() {
             </h2>
           </div>
           <p className="sec-note">
-            Projects built end-to-end — application code, infrastructure and deployment. Hover a
-            screen to look around it.
+            Three featured builds, then the full index. Hover a screen to look around it, or open
+            any project in the list for details.
           </p>
         </div>
 
-        {projects.map((p, i) => (
+        {featured.map((p, i) => (
           <article
             key={p.id}
-            className="grid grid-cols-1 items-center gap-11 border-b border-line py-28 lg:grid-cols-[1fr_1.25fr] lg:gap-20"
+            className="grid grid-cols-1 items-center gap-11 border-b border-line py-20 lg:grid-cols-[1fr_1.25fr] lg:gap-20"
           >
             <div className={`rv ${i % 2 === 1 ? 'lg:order-2' : ''}`}>
               <div className="mb-6 font-mono text-[12px] tracking-[0.1em] text-muted">
-                PROJECT {String(i + 1).padStart(2, '0')}
+                FEATURED {String(i + 1).padStart(2, '0')}
               </div>
 
               <h3 className="display mb-6 text-[clamp(1.9rem,3.4vw,3.1rem)]">{p.title}</h3>
@@ -352,6 +356,8 @@ export default function Work() {
             </div>
           </article>
         ))}
+
+        <ProjectIndex items={rest} startAt={featured.length + 1} />
       </div>
     </section>
   );

@@ -38,6 +38,11 @@
  *           which is exactly how this repo ended up shipping 29 MB of unused
  *           images once before.
  *
+ * featured: true  -> shown large at the top of the Work section (keep it to 3).
+ *           false -> listed in the compact "More projects" index below,
+ *                    with a hover preview on desktop and tap-to-open on mobile.
+ * category: 'Websites' | 'Full-stack' | 'DevOps' (drives the index filter tabs)
+ *
  * presentation:
  *   true  -> the image is already a finished mockup (it has its own
  *            browser chrome / perspective / background), so it is shown
@@ -48,7 +53,28 @@
 
 export const projects = [
   {
+    id: 'northfold',
+    featured: true,
+    category: 'Websites',
+    title: 'Northfold — Architecture Studio Website',
+    description:
+      'A website for an architecture practice where every house is drawn before it is built: as you scroll, a line drawing draws itself, gains dimensions, and is revealed as the finished photograph. Includes a drag-to-compare retrofit with revision clouds and an interactive materials schedule.',
+    images: [
+      { src: '/images/northfold.webp', caption: 'Drawing turns into the house on scroll' },
+      { src: '/images/northfold-sheet.webp', caption: 'Project sheet with dimensions' },
+      { src: '/images/northfold-retrofit.webp', caption: 'Existing / proposed slider' },
+      { src: '/images/northfold-materials.webp', caption: 'Materials schedule' },
+    ],
+    browser: 'northfold.studio',
+    tech: ['Next.js', 'TypeScript', 'Tailwind CSS', 'Framer Motion', 'SVG animation', 'Lenis'],
+    githubUrl: 'https://github.com/hardik-ajmeriya/northfold',
+    liveUrl: 'https://northfold-sable.vercel.app/',
+    status: 'Completed',
+  },
+  {
     id: 'varakh',
+    featured: true,
+    category: 'Websites',
     title: 'VARAKH — Indian Sweets Brand Landing Page',
     description:
       'A product landing page for an original Indian sweets brand. The hero swaps four sweets, each with its own colour palette, by click, auto-play or scroll; one toggle switches the whole page, prices included, between English and Gujarati; and a pinned gift box opens and fills itself compartment by compartment as you scroll.',
@@ -66,6 +92,8 @@ export const projects = [
   },
   {
     id: 'aurora-fitness',
+    featured: false,
+    category: 'Full-stack',
     title: 'Aurora — Strength & Movement Studio',
     description:
       'Booking platform for a Bengaluru training studio. A live class schedule enforces per-session capacity, members sign up and authenticate over JWT, and coach profiles and tiered membership plans are all served from the API.',
@@ -78,6 +106,8 @@ export const projects = [
   },
   {
     id: 'ember-and-oak',
+    featured: false,
+    category: 'Full-stack',
     title: 'Ember & Oak — Restaurant Reservations',
     description:
       'Table reservations for a thirty-eight cover restaurant. A server-side availability engine resolves every sitting against a fixed timezone and real capacity, so a booking made from any machine lands on the slot the kitchen expects.',
@@ -90,6 +120,8 @@ export const projects = [
   },
   {
     id: 'vantage-estates',
+    featured: false,
+    category: 'Full-stack',
     title: 'Vantage Estates — Prime Mumbai Property',
     description:
       'Property portal for a Mumbai agency. Listings across seven PIN codes are filtered and full-text searched in MongoDB, alongside area guides, agent profiles and a valuation-request flow that reaches the office as a qualified enquiry.',
@@ -102,6 +134,8 @@ export const projects = [
   },
   {
     id: 'neuralis-ai',
+    featured: true,
+    category: 'Full-stack',
     title: 'Neuralis — Metered AI Inference Platform',
     description:
       'An inference API sold by the request. SHA-256 hashed keys, per-project budgets enforced before spend rather than after, a bearer-auth public endpoint, and a dashboard reporting requests, p95 latency, error rate and margin.',
@@ -114,6 +148,8 @@ export const projects = [
   },
   {
     id: 'shree-clay-art',
+    featured: false,
+    category: 'Full-stack',
     title: 'Shree Clay Art — Handmade Pottery Store',
     description:
       'A storefront built for a working Rajkot pottery and its real customers: a bilingual English and Gujarati catalogue, cart and checkout, WhatsApp and cash-on-delivery ordering, and delivery rules that match how the workshop actually ships.',
@@ -126,6 +162,8 @@ export const projects = [
   },
   {
     id: 'cureneed',
+    featured: false,
+    category: 'Full-stack',
     title: 'CureNeed — Medicine E-commerce Platform',
     description:
       'A structured medicine management and storefront system with automated categorisation and real-time backend synchronisation, integrated into a wider medical platform.',
@@ -139,6 +177,8 @@ export const projects = [
   },
   {
     id: 'dcpvas',
+    featured: false,
+    category: 'DevOps',
     title: 'DCPVAS — CI/CD Visualiser with AI Failure Analysis',
     description:
       'Real-time visualisation of Jenkins pipeline runs with AI-assisted failure analysis. Streams build stages over SSE, processes logs deterministically and generates structured failure insights.',
@@ -151,6 +191,8 @@ export const projects = [
   },
   {
     id: 'devops-pipeline',
+    featured: false,
+    category: 'DevOps',
     title: 'Cloud-Native DevOps Pipeline on AWS',
     description:
       'End-to-end delivery pipeline: Terraform-provisioned EKS, GitOps deployment through Argo CD, automated builds in GitHub Actions, and OpenTelemetry-based monitoring.',
@@ -163,6 +205,8 @@ export const projects = [
   },
   {
     id: 'k8s-monitoring',
+    featured: false,
+    category: 'DevOps',
     title: 'Kubernetes Monitoring — Prometheus & Grafana',
     description:
       'Cluster observability stack collecting and visualising pod health, CPU and memory usage, and service performance through Grafana dashboards.',
@@ -176,7 +220,7 @@ export const projects = [
 ];
 
 export const stats = [
-  { value: 10, suffix: '', label: 'Projects built end-to-end' },
+  { value: 11, suffix: '', label: 'Projects built end-to-end' },
   { value: 18, suffix: '+', label: 'CI/CD pipelines configured' },
   { value: 20, suffix: '+', label: 'Tools & services used' },
   { value: null, display: '<24h', label: 'Typical reply time' },
