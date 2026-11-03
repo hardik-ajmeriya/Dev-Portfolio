@@ -105,3 +105,7 @@ thumbnails/
 captures/*
 !captures/README.txt
 site-shots/
+
+# Archives made for staging or backup. app-src.tgz once bundled .dev.vars
+# (local secrets), so keep every archive out of git.
+*.tgz

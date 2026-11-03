@@ -184,9 +184,14 @@ if (!fs.existsSync(DIST)) {
   });
 
   t('every project name in the schema is visible on the page', () => {
+    // A featured card prints the whole title in one heading. A project-index
+    // row prints "Name" and "Subtitle" as two elements and drops the " — ",
+    // so for those the check is that both halves sit side by side.
+    const seen = (s) => text.includes(s) || text.includes(s.replace(/'/g, '’'));
     for (const p of projects) {
-      const name = p.title.replace(/'/g, '’');
-      if (!text.includes(name) && !text.includes(p.title)) {
+      const [name, ...rest] = p.title.split(' — ');
+      const sub = rest.join(' — ');
+      if (!seen(p.title) && !(sub && seen(`${name} ${sub}`))) {
         throw new Error('project not rendered: ' + p.title);
       }
     }

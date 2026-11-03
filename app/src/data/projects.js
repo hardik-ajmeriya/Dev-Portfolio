@@ -53,6 +53,28 @@
 
 export const projects = [
   {
+    id: 'forgeline-os',
+    featured: true,
+    category: 'Full-stack',
+    title: 'ForgeLine OS — Smart Factory Floor for Auto-Part Makers',
+    description:
+      'A live 3D and 2D digital twin of a forging and machining plant, built for the auto-component units of Rajkot that still run on paper registers and WhatsApp. Machine status and OEE update in real time, QR job cards move each batch through the stages, a Pareto chart shows which defects cause most rejects, and one tap switches the app to Gujarati. The demo runs a simulated 23-machine plant.',
+    images: [
+      { src: '/images/forgeline-os.webp', caption: 'Live 3D factory floor' },
+      { src: '/images/forgeline-os-machine.webp', caption: 'Machine detail and OEE' },
+      { src: '/images/forgeline-os-map.webp', caption: '2D map coloured by OEE' },
+      { src: '/images/forgeline-os-jobs.webp', caption: 'Job cards by stage' },
+      { src: '/images/forgeline-os-qr.webp', caption: 'Printable QR job card' },
+      { src: '/images/forgeline-os-quality.webp', caption: 'Quality Pareto' },
+      { src: '/images/forgeline-os-mobile.webp', caption: 'Mobile view in Gujarati' },
+    ],
+    browser: 'forgeline-os.vercel.app',
+    tech: ['React', 'Three.js (R3F)', 'Socket.io', 'Node.js', 'Express', 'MongoDB', 'Docker'],
+    githubUrl: '',
+    liveUrl: 'https://forgeline-os.vercel.app/',
+    status: 'Completed',
+  },
+  {
     id: 'northfold',
     featured: true,
     category: 'Websites',
@@ -134,7 +156,7 @@ export const projects = [
   },
   {
     id: 'neuralis-ai',
-    featured: true,
+    featured: false,
     category: 'Full-stack',
     title: 'Neuralis — Metered AI Inference Platform',
     description:
@@ -220,7 +242,7 @@ export const projects = [
 ];
 
 export const stats = [
-  { value: 11, suffix: '', label: 'Projects built end-to-end' },
+  { value: 12, suffix: '', label: 'Projects built end-to-end' },
   { value: 18, suffix: '+', label: 'CI/CD pipelines configured' },
   { value: 20, suffix: '+', label: 'Tools & services used' },
   { value: null, display: '<24h', label: 'Typical reply time' },
