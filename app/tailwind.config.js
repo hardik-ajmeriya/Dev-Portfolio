@@ -38,6 +38,13 @@ export default {
         cellIn: 'cellIn .5s cubic-bezier(.16,1,.3,1) both',
         popIn: 'popIn .5s cubic-bezier(.16,1,.3,1) both',
         checkDraw: 'checkDraw .6s cubic-bezier(.16,1,.3,1) .15s both',
+        /* Project gallery. thumbProgress is both the countdown a visitor
+         * sees and the clock the gallery runs on: its animationend is what
+         * advances to the next screenshot, so there is no second timer in
+         * JavaScript that could drift away from the bar on screen. Linear
+         * because a progress bar that eases is lying about the time left. */
+        thumbProgress: 'thumbProgress 5s linear',
+        captionIn: 'captionIn .45s cubic-bezier(.16,1,.3,1) both',
       },
       keyframes: {
         tick: {
@@ -57,6 +64,14 @@ export default {
         },
         checkDraw: {
           to: { strokeDashoffset: '0' },
+        },
+        thumbProgress: {
+          from: { transform: 'scaleX(0)' },
+          to: { transform: 'scaleX(1)' },
+        },
+        captionIn: {
+          from: { opacity: '0', transform: 'translateY(4px)' },
+          to: { opacity: '1', transform: 'none' },
         },
       },
     },
